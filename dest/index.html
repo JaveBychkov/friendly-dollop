@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+    <title>Look I'm AJAXing!</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"> <!-- load bootstrap via CDN -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> <!-- load jquery via CDN -->
+    <script src="magic.js"></script> <!-- load our javascript file -->
+    <meta charset="utf8">
+</head>
+<body>
+<div class="col-sm-8 col-sm-offset-3">
+
+    <h1>Processing an AJAX Form</h1>
+
+    <!-- OUR FORM -->
+    <form action="/" method="POST">
+
+        <!-- NAME -->
+        <div id="name-group" class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" name="name" placeholder="Henry Pym">
+            <!-- errors will go here -->
+        </div>
+
+        <!-- EMAIL -->
+        <div id="email-group" class="form-group">
+            <label for="email">password</label>
+            <input type="password" class="form-control" name="password" placeholder="********">
+            <!-- errors will go here -->
+        </div>
+
+        <button type="submit" class="btn btn-success">Submit <span class="fa fa-arrow-right"></span></button>
+
+    </form>
+
+</div>
+</body>
+</html>
