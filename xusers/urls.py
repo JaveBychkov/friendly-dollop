@@ -22,7 +22,7 @@ from rest_framework.documentation import include_docs_urls
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('profiles.urls', namespace='api')),
-    url(r'^docs/', include_docs_urls(title='xUsers Managment System API',
+    url(r'^api/docs/', include_docs_urls(title='xUsers Managment System API',
                                      public=False)),
-    url(r'api-auth/', views.obtain_auth_token)
+    url(r'api/api-auth/', views.obtain_auth_token)
 ]

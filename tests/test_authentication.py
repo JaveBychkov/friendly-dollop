@@ -75,7 +75,7 @@ class TestAuthentication(APITestCase):
         username = 'JohnSuper'
         password = 'John1234567890'  # Weak password, John.
         john = create_user(username=username, password=password)
-        response = self.client.post('/api-auth/',
+        response = self.client.post('/api/api-auth/',
                                     data={'username': username,
                                           'password': password}
                                    )
@@ -83,7 +83,7 @@ class TestAuthentication(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotEqual(token, None)
         self.assertEqual(token, john.auth_token.key)
-        response = self.client.post('/api-auth/',
+        response = self.client.post('/api/api-auth/',
                                     data={'username': username,
                                           'password': 'somewrongpass'}
                                    )

@@ -56,7 +56,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     partial_update:
     Updates desired group.
-    
+
     When using PATCH request to manage group's users you must provide 'action'
     field which can be either 'add' or 'remove'
     """
@@ -67,8 +67,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ['retrieve', 'update', 'partial_update']:
             return GroupDetailSerializer
-        else:
-            return super().get_serializer_class()
+        return super().get_serializer_class()
 
 
 class UserGroupsView(generics.RetrieveUpdateAPIView):

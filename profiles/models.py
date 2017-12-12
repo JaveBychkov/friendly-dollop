@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -16,10 +16,21 @@ class Address(models.Model):
 
 
 class User(AbstractUser):
-    """Extended User model"""
-    birthday = models.DateField()
-    address = models.ForeignKey(Address, related_name='users')
-    last_update = models.DateTimeField(auto_now=True)
+    "Extended User model"""
+
+    birthday = models.DateField(help_text='User\'s birthday.')
+    address = models.ForeignKey(Address, help_text='User\'s address.')
+    last_update = models.DateTimeField(
+        auto_now=True, help_text='Date of last information update.'
+    )
+
+    # Redifine some existing fields here to reduce visual noise in serializers.
+
+    first_name = models.CharField(max_length=128,
+                                  help_text='User\'s first name')
+    last_name = models.CharField(max_length=128,
+                                 help_text='User\'s last name')
+    email = models.EmailField(help_text='User\'s email address')
 
     class Meta:
         permissions = (
@@ -28,4 +39,3 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
-
