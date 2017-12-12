@@ -35,11 +35,11 @@ def create_address(**kwargs):
     return Address.objects.create(**defaults)
 
 
-def create_user(username, **kwargs):
+def create_user(username, email, **kwargs):
     """Factory to create User objects"""
     defaults = {
         'username': username,
-        'email': 'user@email.com',
+        'email': email,
         'password': 'userpassword',
         'first_name': 'user_first_name',
         'last_name': 'user_last_name',
@@ -63,9 +63,9 @@ class CreateUsersMixin:
     """
 
     def setUp(self):
-        self.admin_user = create_user('Dimka')
+        self.admin_user = create_user('Dimka', 'admin@email.com')
         self.admin_group = create_admin_group()
         self.admin_group.user_set.add(self.admin_user)
         Token.objects.create(user=self.admin_user)
-        self.regular_user = create_user('Lenka')
+        self.regular_user = create_user('Lenka', 'regular@email.com')
         Token.objects.create(user=self.regular_user)

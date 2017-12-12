@@ -74,7 +74,7 @@ class TestAuthentication(APITestCase):
         """
         username = 'JohnSuper'
         password = 'John1234567890'  # Weak password, John.
-        john = create_user(username=username, password=password)
+        john = create_user(username, 'some@some.com', password=password)
         response = self.client.post('/api/api-auth/',
                                     data={'username': username,
                                           'password': password}

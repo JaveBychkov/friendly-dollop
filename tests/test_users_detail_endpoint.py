@@ -84,8 +84,8 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         # Reloading user from database to check if changes was applied to user.
         self.regular_user.refresh_from_db()
 
-        # Using admin user in context again, because its PUT request and data
-        # provided will be full user data.
+        # Replacing user on request because after PUT request view should
+        # return data that serialzied for admin user. 
         self.request.user = self.admin_user
         serializer = UserSerializer(
             self.regular_user, context={'request': self.request}
@@ -100,14 +100,16 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
         payload = {'email': 'some@some.com', 'address': {'city': 'Кстово'}}
-        # Saving original data here to check presistance of all fields after
+        # Saving original data here to check presence of all fields after
         # update.
         self.request.user = self.admin_user
         original_data = UserSerializer(
             self.regular_user, context={'request': self.request}
         ).data
+
         response = self.client.patch(self.url(args=[self.regular_user.username]),
                                      data=payload, format='json')
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Reloading user from database to check if changes was applied to user.
         # Not using .refresh_from_db() method because we have changed
@@ -127,7 +129,7 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
-        user = create_user('Dmitriy', is_active=False)
+        user = create_user('Dmitriy', 'dmitriy@email.com', is_active=False)
         error = {
             'detail':
             'Editing inactive user state is not allowed. Activate user first'
@@ -143,7 +145,7 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
-        user = create_user('Dmitriy', is_active=False)
+        user = create_user('Dmitriy', 'dmitriy@email.com', is_active=False)
         payload = {'is_active': True, 'email': 'newemail@mail.com'}
         response = self.client.patch(self.url(args=[user.username]),
                                      data=payload, format='json')
@@ -157,10 +159,32 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
-        user = create_user('Dmitriy', is_superuser=True)
+        user = create_user('Dmitriy', 'dmitriy@email.com', is_superuser=True)
         payload = {'password': 'newpassword'}
         error = {'detail': 'You can\'t edit this user data'}
         response = self.client.patch(self.url(args=[user.username]),
                                      data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data, error)
+
+    def test_invalid_address_data_will_cause_error_on_updating(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        payload = {'address': {'city': 'i' * 129}, 'username': 'NewName'}
+        error = {
+            'address': {
+                'city': [
+                    'Ensure this field has no more than 128 characters.'
+                ]
+            }
+        }
+        response = self.client.patch(self.url(args=[self.regular_user.username]),
+                                     data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, error)
+        # Refecth user to make sure address and other data didn't changed
+        user = User.objects.get(pk=self.regular_user.pk)
+        self.assertNotEqual(user.username, 'NewName')
+        self.assertNotEqual(user.address.city, 'i' * 129)
+

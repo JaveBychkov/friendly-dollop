@@ -60,7 +60,8 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         to group.
         """
         self.request.method = 'PATCH'
-        self.group.user_set.add(create_user('user1'), create_user('user2'))
+        self.group.user_set.add(create_user('user1', 'user1@email.com'),
+                                create_user('user2', 'user2@email.com'))
         payload = {'users': [self.regular_user.username,
                              self.admin_user.username], 'action': 'add'}
         serializer = GroupDetailSerializer(self.group, data=payload,
@@ -75,8 +76,8 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         user from group.
         """
         self.request.method = 'PATCH'
-        user1 = create_user('user1')
-        user2 = create_user('user2')
+        user1 = create_user('user1', 'user1@email.com')
+        user2 = create_user('user2', 'user2@email.com')
         self.group.user_set.add(user1, user2)
         payload = {'users': [user1.username],
                    'action': 'remove'}
@@ -106,7 +107,7 @@ class UserGroupsSerializerTestCase(APITestCase):
     expected format.
     """
     def setUp(self):
-        self.user = create_user('Daniel')
+        self.user = create_user('Daniel', 'daniel@email.com')
         self.user.groups.add(create_group('Staff'), create_group('Managers'))
 
     def test_return_data_in_expected_format(self):
@@ -239,9 +240,9 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
     def test_serializer_provides_right_data_representation_for_admins(self):
         """Test serializer return user data in expected format"""
 
-        # Need to set admin_user to request mock
         self.set_user_to_request(self.admin_user)
-        user = create_user(username='user1')
+
+        user = create_user('user1', 'user@email.com')
         last_update = user.last_update.strftime('%Y-%m-%d %H:%M:%S')
         date_joined = user.date_joined.strftime('%Y-%m-%d %H:%M:%S')
         birthday = user.birthday.isoformat()
@@ -266,9 +267,9 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
     def test_serializer_provides_right_data_representation_for_not_admin(self):
         """Test serializer return user data in expected format"""
 
-        # Need to set regualr_user to request mock
+
         self.set_user_to_request(self.regular_user)
-        user = create_user(username='user1')
+        user = create_user('user1', 'user@email.com')
         birthday = user.birthday.isoformat()
         url = self.build_url(reverse('api:user-detail', args=[user.username]))
         data = {'url': url, 'first_name': 'user_first_name',

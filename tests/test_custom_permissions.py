@@ -20,7 +20,7 @@ class CustomPermissionsTestCase(CreateUsersMixin, APITestCase):
     def test_admin_cant_change_user_data_if_user_is_not_active(self):
         """Check that permission acts correctly in different occasions"""
         permission = ActivateFirstIfInactive()
-        inactive_user = create_user('Robert', is_active=False)
+        inactive_user = create_user('Robert', 'robert@email.com', is_active=False)
 
         # Check that permission will be denied if request method is not safe
         # and user is inactive.
@@ -44,9 +44,12 @@ class CustomPermissionsTestCase(CreateUsersMixin, APITestCase):
     def test_admin_cant_change_superuser_data(self):
         """Test that noone except superusers can change superuser data"""
         permission = CantEditSuperuserIfNotSuperuser()
-        superuser = create_user('Robert', is_staff=True, is_superuser=True)
-        superuser_2 = create_user('Roberto', is_staff=True, is_superuser=True)
-        editor = create_user('Veronika', is_staff=True, is_superuser=False)
+        superuser = create_user('Robert', 'robert@email.com',
+                                is_staff=True, is_superuser=True)
+        superuser_2 = create_user('Roberto', 'roberto@email.com',
+                                  is_staff=True, is_superuser=True)
+        editor = create_user('Veronika', 'veronika@email.com',
+                             is_staff=True, is_superuser=False)
         self.admin_group.user_set.add(superuser, editor)
 
         self.request.user = editor

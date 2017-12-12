@@ -6,7 +6,7 @@ from django.db import models
 class Address(models.Model):
     """Model represents User's address"""
     # Should we create separate different models for each field in purpose of
-    # normalization? Maybe, but i wouldn't do this.
+    # normalization? Maybe, but i'll not do this.
     zip_code = models.CharField(max_length=6,
                                 validators=[RegexValidator(r'^\d{6,6}$')])
     country = models.CharField(max_length=128)
@@ -30,7 +30,7 @@ class User(AbstractUser):
                                   help_text='User\'s first name')
     last_name = models.CharField(max_length=128,
                                  help_text='User\'s last name')
-    email = models.EmailField(help_text='User\'s email address')
+    email = models.EmailField(help_text='User\'s email address', unique=True)
 
     class Meta:
         permissions = (

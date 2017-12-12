@@ -6,7 +6,7 @@ from rest_framework.test import APITestCase, APIRequestFactory, force_authentica
 from profiles.serializers import UserSerializer
 from profiles.models import User
 
-from .utils import CreateUsersMixin
+from .utils import CreateUsersMixin, create_user
 
 
 class TestUserListEndPoint(CreateUsersMixin, APITestCase):
@@ -129,4 +129,59 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
         response = self.client.post(reverse('api:user-list'),
                                     data=self.payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data, error)
+
+    def test_creation_fails_if_admin_provides_not_valid_address(self):
+        """
+        Test that our create user method actualy verify data using address
+        serialzier
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        error = {
+            'address': {
+                'zip_code': [
+                    'Enter a valid value.',
+                    'Ensure this field has no more than 6 characters.'
+                ]
+            }
+        }
+        # Update payload with invalid data.
+        self.payload['address'].update({'zip_code': '1234567'})
+        response = self.client.post(reverse('api:user-list'),
+                                    data=self.payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, error)
+        # Try to fetch user to make sure user itself wasn't created.
+        self.assertFalse(User.objects.filter(username='Sarah1234').exists())
+
+    def test_creation_of_user_with_already_existing_username(self):
+        """
+        Test that user can't create user if user with given username already
+        exists.
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        error = {'username': ['A user with that username already exists.']}
+        create_user('Sarah1234', 'some@mail.com')
+        response = self.client.post(reverse('api:user-list'),
+                                    data=self.payload, format='json')
+
+        self.assertEqual(response.data, error)
+
+    def test_creation_of_user_with_already_existing_email(self):
+        """
+        Test that user can't create user if user with given email already
+        exists.
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        error = {'email': ['user with this email already exists.']}
+        create_user('NoSarah1234', 'sarah@email.com')
+        response = self.client.post(reverse('api:user-list'),
+                                    data=self.payload, format='json')
+
         self.assertEqual(response.data, error)

@@ -16,7 +16,7 @@ class UserGroupsSerializer(serializers.Serializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         """
-        Method will clear user groups and then add new, provided groups.
+        Method will clear user groups and then add new.
         """
         groups = validated_data.pop('groups', None)
         if groups is not None:
@@ -32,7 +32,7 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     Serializer for group's details, provides different actions for PATCH
     and PUT requests
 
-    If PATCH request is used serializer will check for presistance of action
+    If PATCH request is used serializer will check for presence of action
     field in case of updating group's members, if there is no users to update
     presistance check of action field is ommited
     """
@@ -136,25 +136,24 @@ class UserSerializer(serializers.ModelSerializer):
     basic fields representation.
     """
 
-    basic_user_fields = {'first_name', 'url', 'last_name', 'username',
-                         'email', 'birthday', 'address', 'groups'}
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        basic_user_fields = {'first_name', 'url', 'last_name', 'username',
+                         'email', 'birthday', 'address', 'groups'}
 
         request = self.context.get('request')
         # Permission to check.
         permission = 'profiles.view_full_info'
-        # because of lazy if's statements evaluation request.user will not
-        # raise KeyError if Request object is not provided.
         if request is None or not request.user.has_perm(permission):
-            restricted_fields = set(self.fields) - self.basic_user_fields
+            restricted_fields = set(self.fields) - basic_user_fields
             for field in restricted_fields:
                 self.fields.pop(field)
 
     url = serializers.HyperlinkedIdentityField(view_name='api:user-detail',
                                                lookup_field='username')
     address = AddressSerializer()
+
     groups = serializers.SlugRelatedField(
         read_only=True,
         slug_field='name',
@@ -172,50 +171,44 @@ class UserSerializer(serializers.ModelSerializer):
                         'date_joined': {'read_only': True,
                                         'format': '%Y-%m-%d %H:%M:%S'},
                         'last_update': {'read_only': True,
-                                        'format': '%Y-%m-%d %H:%M:%S'},
-                        'email': {'allow_blank': False, 'required': True},
-                        'first_name': {'allow_blank': False, 'required': True},
-                        'last_name': {'allow_blank': False, 'required': True},
+                                        'format': '%Y-%m-%d %H:%M:%S'}
                        }
 
-    # TODO: Find a way to use existing Address serializer to create new address
-    # or update existing. Some implementations i've already tried raises drf
-    # exceptions.
+    # Defining create and update method because we have customized the way
+    # nested address object looks and placed it as nested serialzier, so 
+    # we can't use default implementation for nested objects.
 
     @transaction.atomic
     def create(self, validated_data):
-        address = validated_data.pop('address')
-        address = Address.objects.create(**address)
-        user = User.objects.create_user(**validated_data, address=address)
-        return user
+        """Method to create user instance with coresponding address"""
+        address_data = validated_data.pop('address')
+        serializer = AddressSerializer(data=address_data)
+
+        if serializer.is_valid():
+            address = serializer.save()
+            user = User.objects.create_user(**validated_data, address=address)
+            return user
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """Method to update user instance and address"""
         address_data = validated_data.pop('address', None)
 
         if address_data is not None:
             address = instance.address
-            address.zip_code = address_data.get('zip_code', address.zip_code)
-            address.country = address_data.get('country', address.country)
-            address.city = address_data.get('city', address.city)
-            address.district = address_data.get('district', address.district)
-            address.street = address_data.get('street', address.street)
-            address.save()
+            serializer = AddressSerializer(address,
+                                           data=address_data,
+                                           partial=True)
+            if serializer.is_valid():
+                serializer.save()
 
-        instance.first_name = validated_data.get('first_name',
-                                                 instance.first_name)
-        instance.last_name = validated_data.get('last_name',
-                                                instance.last_name)
-        instance.username = validated_data.get('username', instance.username)
-        instance.email = validated_data.get('email', instance.email)
-        instance.birthday = validated_data.get('birthday', instance.birthday)
-        instance.is_active = validated_data.get('is_active',
-                                                instance.is_active)
-
-        password = validated_data.get('password')
+        password = validated_data.pop('password', None)
 
         if password is not None:
             instance.set_password(password)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
 
         instance.save()
         return instance

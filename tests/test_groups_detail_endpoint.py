@@ -114,7 +114,7 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
         self.assertIn(self.regular_user, users)
 
         # Test adding another user
-        user = create_user(username='John')
+        user = create_user('John', 'john@email.com')
 
         payload = {'users': [user.username], 'action': 'add'}
 

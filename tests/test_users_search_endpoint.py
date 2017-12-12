@@ -12,15 +12,15 @@ from .utils import create_user, CreateUsersMixin
 
 class TestAPISearch(CreateUsersMixin, APITestCase):
     """Test case to test that provided search params return correct data"""
-    
+
     def setUp(self):
         super().setUp()
 
-        create_user(username='Robz', first_name='Robin', last_name='Sparkles')
-        create_user(username='John', email='jackkennedy@usgov.com')
-        create_user(username='Lily', birthday=date(1990, 2, 21))
-        create_user(username='Something', is_active=False)
-        create_user(username='Somethin2', is_active=False)
+        create_user('Robz', 'robz@email.com', first_name='Robin', last_name='Sparkles')
+        create_user('John', 'jackkennedy@usgov.com')
+        create_user('Lily', 'lily@email.com', birthday=date(1990, 2, 21))
+        create_user('Something', 'some1@email.com', is_active=False)
+        create_user('Somethin2', 'some2@email.com', is_active=False)
 
         # Dummy request
         self.safe_request = APIRequestFactory().get('/something/')

@@ -87,9 +87,6 @@ class UserGroupsTestCase(CreateUsersMixin, APITestCase):
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
 
-        url = reverse('api:user-groups',
-                      kwargs={'username': self.regular_user.username}
-                     )
         payload = {'groups': ['Managers']}
 
         response = self.client.put(self.url, data=payload, format='json')
@@ -158,3 +155,18 @@ class UserGroupsTestCase(CreateUsersMixin, APITestCase):
         # Verify that existing group - Administrators didn't added to user
         self.assertFalse(self.regular_user.groups.all())
 
+    def test_empty_groups_request_will_erase_user_groups(self):
+        """
+        Make sure that accidental empty put request will not delete user's
+        groups
+        """
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        self.regular_user.groups.add(create_group(name='Managers'),
+                                     create_group(name='Sales'))
+        response = self.client.put(self.url, data={'groups': []}, format='json')
+        # refetch user
+
+        user = User.objects.get(pk=self.regular_user.pk)
+        self.assertFalse(user.groups.all().exists())
