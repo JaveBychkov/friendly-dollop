@@ -30,7 +30,7 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
         self.safe_request = APIRequestFactory().get('/something/')
 
 
-    # Because we successfully tested out serializers to return data in
+    # Because we successfully tested our serializers to return data in
     # format we want, we can rely on it and use it in test assertions
 
     def test_returns_list_of_users_with_full_data_for_admin(self):

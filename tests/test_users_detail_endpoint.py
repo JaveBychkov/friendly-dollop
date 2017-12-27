@@ -188,3 +188,16 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         self.assertNotEqual(user.username, 'NewName')
         self.assertNotEqual(user.address.city, 'i' * 129)
 
+    def test_admins_cant_change_email_or_username_if_it_already_exists(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+
+        u1 = create_user('user', 'user@mail.com')
+        u2 = create_user('user2', 'user2@mail.com')
+
+        payload = {'username': 'user'}
+
+        response = self.client.patch(self.url(args=[u2.username]),
+                                     data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

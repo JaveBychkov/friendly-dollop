@@ -5,8 +5,6 @@ from django.db import models
 
 class Address(models.Model):
     """Model represents User's address"""
-    # Should we create separate different models for each field in purpose of
-    # normalization? Maybe, but i'll not do this.
     zip_code = models.CharField(max_length=6,
                                 validators=[RegexValidator(r'^\d{6,6}$')])
     country = models.CharField(max_length=128)
@@ -19,7 +17,8 @@ class User(AbstractUser):
     "Extended User model"""
 
     birthday = models.DateField(help_text='User\'s birthday.')
-    address = models.ForeignKey(Address, help_text='User\'s address.')
+    address = models.ForeignKey(Address, help_text='User\'s address.',
+                                null=True, on_delete=models.SET_NULL)
     last_update = models.DateTimeField(
         auto_now=True, help_text='Date of last information update.'
     )

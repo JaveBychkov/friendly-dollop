@@ -23,6 +23,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('profiles.urls', namespace='api')),
     url(r'^api/docs/', include_docs_urls(title='xUsers Managment System API',
-                                     public=False)),
+                                         authentication_classes=[],
+                                         permission_classes=[])),
     url(r'api/api-auth/', views.obtain_auth_token)
 ]

@@ -32,8 +32,8 @@ def create_address(**kwargs):
         'street': 'Родионова'
     }
     defaults.update(kwargs)
-    return Address.objects.create(**defaults)
-
+    obj, create = Address.objects.get_or_create(**defaults)
+    return obj
 
 def create_user(username, email, **kwargs):
     """Factory to create User objects"""
