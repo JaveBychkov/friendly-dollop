@@ -21,22 +21,13 @@ class UserGroupsSerializer(serializers.Serializer):
         """
         groups = validated_data.pop('groups', None)
         if groups is not None:
-            instance.groups.clear()
-            # TODO REFACTOR FOR CYCLE!!11
-            for group in groups:
-                instance.groups.add(group)
+            instance.groups.set(groups)
             return instance
-        raise serializers.ValidationError(detail='Bad Request')
 
 class GroupDetailSerializer(serializers.ModelSerializer):
 
     """
-    Serializer for group's details, provides different actions for PATCH
-    and PUT requests
-
-    If PATCH request is used serializer will check for presence of action
-    field in case of updating group's members, if there is no users to update
-    presistance check of action field is ommited
+    Serializer for group's details.
     """
 
     url = serializers.HyperlinkedIdentityField(view_name='api:group-detail',
