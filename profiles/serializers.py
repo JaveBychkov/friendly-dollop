@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.forms.models import model_to_dict
 
 from rest_framework import serializers
 from rest_framework import status
@@ -21,6 +22,7 @@ class UserGroupsSerializer(serializers.Serializer):
         groups = validated_data.pop('groups', None)
         if groups is not None:
             instance.groups.clear()
+            # TODO REFACTOR FOR CYCLE!!11
             for group in groups:
                 instance.groups.add(group)
             return instance
@@ -44,60 +46,19 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     users = serializers.SlugRelatedField(many=True, slug_field='username',
                                          queryset=User.objects.all(),
                                          source='user_set')
-    action = serializers.CharField(write_only=True, default='')
-
-    def validate(self, data):
-        """Validate that admin passed 'action' if he want to update users"""
-        if self.partial:
-            if data.get('user_set') is not None and not data.get('action', ''):
-                raise serializers.ValidationError(
-                    detail='You must provide "action" value if you want to \
-                    update users using "PATCH" request'
-                )
-        return data
-
-    def validate_action(self, value):
-        """
-        Validated that provided action is one of the following : add, remove or
-        blank
-        """
-        if self.partial:
-            if value.lower() not in ['add', 'remove', '']:
-                raise serializers.ValidationError(
-                    detail='Action must be either "add" or "remove"'
-                )
-        return value
-
     class Meta:
         model = Group
-        fields = ('url', 'name', 'users_count', 'users', 'action')
-
-    def update_on_put(self, instance, users):
-        """Update strategy used on PUT request"""
-        instance.user_set.clear()
-        for user in users:
-            instance.user_set.add(user)
-        # Can avoid hitting database on PUT request.
-        instance.users_count = len(users)
-
-    def update_on_patch(self, instance, users, action):
-        """Update strategy used on PATCH request"""
-        method = getattr(instance.user_set, action)
-        for user in users:
-            method(user)
-        # Counting new ammount of users, because annotation will not be updated.
-        instance.users_count = instance.user_set.count()
+        fields = ('url', 'name', 'users_count', 'users')
 
     @transaction.atomic
     def update(self, instance, validated_data):
         instance.name = validated_data.get('name', instance.name)
-        users = validated_data.get('user_set', [])
-        action = validated_data.get('action', '')
-        if self.partial and action:
-            self.update_on_patch(instance, users, action)
-        elif not self.partial:
-            self.update_on_put(instance, users)
         instance.save()
+        users = validated_data.get('user_set', None)
+        if users is not None:
+            instance.user_set.set(users)
+            # Handle annotation:
+            instance.users_count = len(users)
         return instance
 
 
@@ -127,7 +88,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Address
-        exclude = ('id',)
+        fields = ('zip_code', 'country', 'city', 'district', 'street')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -140,7 +101,7 @@ class UserSerializer(serializers.ModelSerializer):
         super().__init__(*args, **kwargs)
 
         basic_user_fields = {'first_name', 'url', 'last_name', 'username',
-                         'email', 'birthday', 'address', 'groups'}
+                             'email', 'birthday', 'address', 'groups'}
 
         request = self.context.get('request')
         # Permission to check.
@@ -150,10 +111,10 @@ class UserSerializer(serializers.ModelSerializer):
             for field in restricted_fields:
                 self.fields.pop(field)
 
+
     url = serializers.HyperlinkedIdentityField(view_name='api:user-detail',
                                                lookup_field='username')
     address = AddressSerializer()
-
     groups = serializers.SlugRelatedField(
         read_only=True,
         slug_field='name',
@@ -164,43 +125,56 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         depth = 1
         fields = ('id', 'url', 'first_name', 'last_name', 'username',
-                  'password', 'email', 'birthday', 'address', 'groups',
-                  'is_active', 'date_joined', 'last_update')
+                  'password', 'email', 'birthday', 'is_active',
+                  'address', 'groups', 'date_joined', 'last_update')
 
         extra_kwargs = {'password': {'write_only': True},
                         'date_joined': {'read_only': True,
                                         'format': '%Y-%m-%d %H:%M:%S'},
                         'last_update': {'read_only': True,
-                                        'format': '%Y-%m-%d %H:%M:%S'}
+                                        'format': '%Y-%m-%d %H:%M:%S'},
+                        'is_active': {'default': True}
                        }
 
     # Defining create and update method because we have customized the way
-    # nested address object looks and placed it as nested serialzier, so 
-    # we can't use default implementation for nested objects.
+    # nested address object looks and placed it as nested serialzier, so
+    # we can't use default implementation for objects with fk.
 
     @transaction.atomic
     def create(self, validated_data):
         """Method to create user instance with coresponding address"""
-        address_data = validated_data.pop('address')
-        serializer = AddressSerializer(data=address_data)
 
-        if serializer.is_valid():
-            address = serializer.save()
-            user = User.objects.create_user(**validated_data, address=address)
-            return user
+        address_data = validated_data.pop('address')
+        address, _ = Address.objects.get_or_create(**address_data)
+
+        user = User.objects.create_user(**validated_data, address=address)
+        return user
 
     @transaction.atomic
     def update(self, instance, validated_data):
         """Method to update user instance and address"""
+
         address_data = validated_data.pop('address', None)
 
         if address_data is not None:
+            # look if updated address already exists in database
             address = instance.address
-            serializer = AddressSerializer(address,
-                                           data=address_data,
-                                           partial=True)
-            if serializer.is_valid():
-                serializer.save()
+            existing_data = model_to_dict(address)
+            existing_data.pop('id')
+            existing_data.update(address_data)
+            try:
+                obj = Address.objects.get(**existing_data)
+                if not obj == address:
+                    if address.user_set.count() == 1:
+                        address.delete()
+                    instance.address = obj
+            except Address.DoesNotExist:
+                if address.user_set.count() == 1:
+                    for attr, value in address_data.items():
+                        setattr(address, attr, value)
+                    address.save()
+                else:
+                    instance.address = Address.objects.create(**existing_data)
 
         password = validated_data.pop('password', None)
 

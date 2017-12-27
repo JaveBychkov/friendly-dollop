@@ -34,36 +34,20 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
                                            context={'request': self.request})
         self.assertEqual(serializer.data, group_data)
 
-    def test_validation(self):
-        """Test object level validation, validation error should be raised:
-        if user provides 'users' to update, but didn't provide 'action',
-        if user provides not correct action method.
-        """
-        payload = {'users': [self.regular_user.username], 'action': 'add'}
-        serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
-                                           partial=True)
-        self.assertTrue(serializer.is_valid())
-        payload = {'users': [self.admin_user.username]}
-        serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
-                                           partial=True)
-        self.assertFalse(serializer.is_valid())
-        payload = {'users': [self.regular_user.username], 'action': 'bad'}
-        serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
-                                           partial=True)
-        self.assertFalse(serializer.is_valid())
-
     def test_update_method_adds_users(self):
         """Test that update method with provided "action": "add" will add user
         to group.
         """
         self.request.method = 'PATCH'
-        self.group.user_set.add(create_user('user1', 'user1@email.com'),
-                                create_user('user2', 'user2@email.com'))
+        u1 = create_user('user1', 'user1@email.com')
+        u2 = create_user('user2', 'user2@email.com')
+        self.group.user_set.add(u1, u2)
+
+        # PATCH should act like PUT on group's users update
         payload = {'users': [self.regular_user.username,
-                             self.admin_user.username], 'action': 'add'}
+                             self.admin_user.username,
+                             u1.username,
+                             u2.username]}
         serializer = GroupDetailSerializer(self.group, data=payload,
                                            context={'request': self.request},
                                            partial=True)
@@ -79,8 +63,7 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         user1 = create_user('user1', 'user1@email.com')
         user2 = create_user('user2', 'user2@email.com')
         self.group.user_set.add(user1, user2)
-        payload = {'users': [user1.username],
-                   'action': 'remove'}
+        payload = {'users': [user2.username],}
         serializer = GroupDetailSerializer(self.group, data=payload,
                                            context={'request': self.request},
                                            partial=True)

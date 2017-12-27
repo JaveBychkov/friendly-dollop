@@ -92,7 +92,7 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
         group = create_group(name='Managers')
 
         payload = {'users': [self.admin_user.username,
-                             self.regular_user.username], 'action': 'add'}
+                             self.regular_user.username]}
 
         response = self.client.patch(
             reverse('api:group-detail', args=[group.name]), data=payload,
@@ -108,15 +108,18 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
         ).data
         self.assertEqual(response.data, serialized_data)
 
-        self.assertEqual(group.user_set.all().count(), 2)
         users = group.user_set.all()
+        self.assertEqual(users.count(), 2)
+
         self.assertIn(self.admin_user, users)
         self.assertIn(self.regular_user, users)
 
         # Test adding another user
         user = create_user('John', 'john@email.com')
 
-        payload = {'users': [user.username], 'action': 'add'}
+        payload = {'users': [user.username,
+                             self.admin_user.username,
+                             self.regular_user.username]}
 
         response = self.client.patch(
             reverse('api:group-detail', args=[group.name]), data=payload,
@@ -140,8 +143,8 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
         self.admin_group.user_set.add(self.regular_user)
-
-        payload = {'users': [self.regular_user.username], 'action': 'remove'}
+        # except to regular user to no longer be in administrators group
+        payload = {'users': [self.admin_user.username]}
 
         response = self.client.patch(
             reverse('api:group-detail', args=[self.admin_group.name]),
@@ -159,36 +162,19 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
             group.user_set.filter(username=self.regular_user.username).exists()
         )
 
-    def test_server_returns_error_if_action_not_provided_on_PATCH_request(self):
-        """Test server returns error if users for update is provided on request
-        but action is not present on request
-        """
-        self.client.credentials(
-            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
-        )
-
-        payload = {'users': [self.regular_user.username]}
-        response = self.client.patch(
-            reverse('api:group-detail', args=[self.admin_group.name]),
-            data=payload, format='json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
     def test_server_return_error_if_admin_trying_to_add_non_existing_users(self):
         """Test that admin can't add nonexisting users to groups"""
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
         )
 
-        payload = {'users': ['Samuel'], 'action': 'add'}
+        payload = {'users': ['Samuel']}
         response = self.client.patch(
             reverse('api:group-detail', args=[self.admin_group.name]),
             data=payload, format='json'
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-        payload.pop('action')
 
         response = self.client.put(
             reverse('api:group-detail', args=[self.admin_group.name]),
