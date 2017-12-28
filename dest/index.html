@@ -45,11 +45,8 @@
             </table>
         </div>
         <div id="createUser">
-        <div class="container">
-            <a class="btn btn-primary" data-toggle="collapse" href="#createNew" aria-expanded="false" aria-controls="createNew" id="createNewButton">
-                Create New User
-            </a>
-        </div>
+          <div class="container">
+          </div>
         </div>
         <div class="container collapse" id="createNew">
             <div class="card">
@@ -119,6 +116,11 @@
     <script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script>
+        if ( ! localStorage.getItem('token') | localStorage.getItem('token') == null) {
+          window.location.replace('/login/')
+        }
+      </script>
     <script src="script2.js"></script>
     </body>
 </html>

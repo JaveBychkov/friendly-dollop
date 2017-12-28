@@ -1,16 +1,17 @@
 $(document).ready(function() {
+    $('.form-login').removeClass('is-invalid');
+    $('.invalid-feedback').text('');
     $('form').submit(function(event) {
         var formData = {
             'username' : $('input[name=username]').val(),
             'password': $('input[name=password]').val()
         };
-
+        console.log(formData)
         var request = $.ajax({
                           dataType: 'json',
                           type : 'post',
                           url: '/api/api-auth/',
                           data : formData,
-                          encode: true
                       });
 
         request.fail(function (data) {

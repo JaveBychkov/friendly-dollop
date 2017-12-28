@@ -77,13 +77,13 @@ function GetData() {
             }
         });
         if ( isAdmin ) {
-            $('div.createUser').append(
-                $('a', {'class': 'btn btn-primary',
+            $('#createUser>div').append(
+                $('<a>', {'class': 'btn btn-primary',
                         'data-toggle': 'collapse',
                         'href': '#createNew',
                         'aria-expanded': 'false',
                         'aria-controls': 'createNew',
-                        'id': 'createNewButton'})
+                        'id': 'createNewButton'}).text('Create New User')
             );
                 $('#createUserForm').unbind('submit').bind('submit', function (event) { 
                     var form = $(this);
@@ -101,6 +101,7 @@ $(document).ready(function() {
     logOutLink.addEventListener('click', function(event) {
         event.preventDefault();
         localStorage.removeItem('token');
+        localStorage.removeItem('is_admin');
         window.location.replace('/login/');
     });
     GetData();
@@ -214,19 +215,19 @@ function UpdateGroupsForm(rowData) {
         $('<h5>', {'class': 'text-center'}).text('User Groups'),
         $('<select>', {'id': 'userGroupsSelect', 'class': 'form-control', 'multiple': 'multiple'})
     ).appendTo(main_block);
+    if ( isAdmin ) {
+        var controls = $('<div>', {'class': 'control-arrows text-center'}).append(
+            $('<input>', {'type': 'button', 'id': 'buttonAllRight', 'value': '>>', 'class': 'btn btn-default'}),$('<br/>'),
+            $('<input>', {'type': 'button', 'id': 'buttonRight', 'value': '>', 'class': 'btn btn-default'}),$('<br/>'),
+            $('<input>', {'type': 'button', 'id': 'buttonLeft', 'value': '<', 'class': 'btn btn-default'}),$('<br/>'),
+            $('<input>', {'type': 'button', 'id': 'buttonAllLeft', 'value': '<<', 'class': 'btn btn-default'})
+        ).appendTo(main_block)
 
-    var controls = $('<div>', {'class': 'control-arrows text-center'}).append(
-        $('<input>', {'type': 'button', 'id': 'buttonAllRight', 'value': '>>', 'class': 'btn btn-default'}),$('<br/>'),
-        $('<input>', {'type': 'button', 'id': 'buttonRight', 'value': '>', 'class': 'btn btn-default'}),$('<br/>'),
-        $('<input>', {'type': 'button', 'id': 'buttonLeft', 'value': '<', 'class': 'btn btn-default'}),$('<br/>'),
-        $('<input>', {'type': 'button', 'id': 'buttonAllLeft', 'value': '<<', 'class': 'btn btn-default'})
-    ).appendTo(main_block)
-
-    var availableGroups = $('<div>', {'class': 'available-groups'}).append(
-        $('<h5>', {'class': 'text-center'}).text('Available Groups'),
-        $('<select>', {'id': 'availableGroupsSelect', 'class': 'form-control', 'multiple': 'multiple'})
-    ).appendTo(main_block)
-
+        var availableGroups = $('<div>', {'class': 'available-groups'}).append(
+            $('<h5>', {'class': 'text-center'}).text('Available Groups'),
+            $('<select>', {'id': 'availableGroupsSelect', 'class': 'form-control', 'multiple': 'multiple'})
+        ).appendTo(main_block)
+    }
     var all_groups = [];
 
     var request = $.ajax({
@@ -322,10 +323,10 @@ function IsAdmin(data) {
     var userObject = data[0];
     if ( userObject.hasOwnProperty('date_joined') ) {
         localStorage.setItem('is_admin', true)
-        isAdmin = localStorage.getItem('is_admin');
+        isAdmin = true;
     } else {
         localStorage.setItem('is_admin', false)
-        isAdmin = localStorage.getItem('is_admin');
+        isAdmin = false;
     }
 };
 

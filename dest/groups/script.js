@@ -15,7 +15,7 @@
 //       /,_|  |   /,_/   /
 //          /,_/      '`-'
 
-var isAdmin = localStorage.getItem('is_admin')
+var isAdmin = JSON.parse(localStorage.getItem('is_admin'))
 
 function AnimateButton(button) {
     button.addClass('btn-success');
