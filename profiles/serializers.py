@@ -123,8 +123,7 @@ class UserSerializer(serializers.ModelSerializer):
                         'date_joined': {'read_only': True,
                                         'format': '%Y-%m-%d %H:%M:%S'},
                         'last_update': {'read_only': True,
-                                        'format': '%Y-%m-%d %H:%M:%S'},
-                        'is_active': {'default': True}
+                                        'format': '%Y-%m-%d %H:%M:%S'}
                        }
 
     # Defining create and update method because we have customized the way
