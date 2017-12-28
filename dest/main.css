@@ -1,0 +1,91 @@
+td.details-control {
+    background: url('/resources/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+
+tr.shown td.details-control {
+    background: url('/resources/details_close.png') no-repeat center center;
+}
+
+nav {
+    margin-bottom: 20px;
+}
+
+#createNewButton {
+    margin-top: 20px;
+}
+
+.card {
+    margin-top: 20px;
+}
+
+#updateGroups {
+    margin-top: 5px;
+}
+
+.user-groups{
+    float: left;
+    width: 45%;
+} 
+
+.available-groups {
+    float: left;
+    width: 45%;
+}
+
+.user-groups select {
+    height: 200px;
+    padding: 0;
+    width: 100%;
+    float: left;
+}
+
+.available-groups select {
+    height: 200px;
+    padding: 0;
+    width: 100%;
+    float: left;
+}
+
+.user-groups select option {
+    padding: 4px 10px 4px 10px;
+}
+
+.available-groups select option {
+    padding: 4px 10px 4px 10px;
+}
+
+.user-groups select option:hover {
+    padding: 4px 10px 4px 10px;
+}
+
+.available-groups select option:hover {
+    background: #eeeeee;
+}
+
+.control-arrows {
+    float: left;
+    width: 10%;
+    margin-top: 45px;
+}
+
+.control-arrows input {
+    width: 70%;
+    margin-bottom: 5px;
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+.btn.btn-success {
+    transition: 0.5s ease;
+}
+
+.btn.btn-primary {
+    transition: 0.5s ease;
+}
+
+#logout {
+    float: right;
+}

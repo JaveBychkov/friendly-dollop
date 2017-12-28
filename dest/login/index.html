@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"> <!-- load bootstrap via CDN -->
+    <link rel="stylesheet" href="login.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> <!-- load jquery via CDN -->
+    <script src="magic.js"></script> <!-- load our javascript file -->
+    <meta charset="utf8">
+</head>
+<body>
+
+<div class="container">
+    <!-- FORM -->
+    <form class="form-login" method="POST">
+        <h2 class="form-login-heading">Please login to continue</h2>
+        <!-- USERNAME -->
+        <div id="non_field_errors">
+            <div class="invalid-feedback"></div>
+        </div>
+        <div id="username" class="form-group">
+            <label for="username" class="sr-only">Username</label>
+            <input type="text" class="form-control form-control-lg" name="username" placeholder="Enter your username">
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <!-- PASSWORD -->
+        <div id="password" class="form-group">
+            <label for="password" class="sr-only">Password</label>
+            <input type="password" class="form-control form-control-lg" name="password" placeholder="Enter your password">
+            <div class="invalid-feedback"></div>
+        </div>
+
+        <button type="submit" class="btn btn-lg btn-primary btn-block">Submit</button>
+
+    </form>
+</div>
+</body>
+</html>

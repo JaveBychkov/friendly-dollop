@@ -4,4 +4,6 @@ __pycache__/
 *.sublime-workspace
 *.sqlite3
 *.vscode/
+fabfile.py
 something.code-workspace
+static/

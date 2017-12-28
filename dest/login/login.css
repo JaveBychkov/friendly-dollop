@@ -1,0 +1,27 @@
+body {
+    padding-top: 40px;
+    padding-bottom: 40px;
+}
+
+.form-login {
+    max-width: 400px;
+    padding: 15px;
+    margin: 0 auto;
+}
+
+.form-login-heading {
+    padding-bottom: 20px;
+}
+
+.form-login .form-control {
+    position: relative;
+    box-sizing: border-box;
+    height: auto;
+    padding: 10px;
+    font-size: 20px;
+}
+
+.form-login .invalid-feedback {
+    display: block;
+    font-size: 15px;
+}

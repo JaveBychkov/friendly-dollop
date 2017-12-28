@@ -1,39 +1,124 @@
 <!doctype html>
 <html>
 <head>
-    <title>Look I'm AJAXing!</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css"> <!-- load bootstrap via CDN -->
-
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> <!-- load jquery via CDN -->
-    <script src="magic.js"></script> <!-- load our javascript file -->
+    <title>xUsers Management System</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css" rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css"> <!-- load bootstrap via CDN -->
+    <link rel="stylesheet" href="main.css">
     <meta charset="utf8">
 </head>
-<body>
-<div class="col-sm-8 col-sm-offset-3">
-
-    <h1>Processing an AJAX Form</h1>
-
-    <!-- OUR FORM -->
-    <form action="/" method="POST">
-
-        <!-- NAME -->
-        <div id="name-group" class="form-group">
-            <label for="name">Name</label>
-            <input type="text" class="form-control" name="name" placeholder="Henry Pym">
-            <!-- errors will go here -->
+    <body>
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary rounded-bottom">
+                    <a class="navbar-brand" href="#">xUsers</a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+                      <span class="navbar-toggler-icon"></span>
+                    </button>
+                    
+                    <div class="collapse navbar-collapse" id="navbarColor02">
+                      <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                          <a class="nav-link" href="/">Users <span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="/groups/">Groups</a>
+                        </li>
+                      </ul>
+                      <form class="form-inline">
+                        <button id='logout' class="btn btn-outline-light my-2 my-sm-0" type="button">Logout</button>
+                      </form>
+                    </div>
+                </nav>
+        </div>
+        <div class="container">
+            <table id="example" class="table table-striped table-bordered" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>first_name</th>
+                        <th>last_name</th>
+                        <th>username</th>
+                        <th>email</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+        <div id="createUser">
+        <div class="container">
+            <a class="btn btn-primary" data-toggle="collapse" href="#createNew" aria-expanded="false" aria-controls="createNew" id="createNewButton">
+                Create New User
+            </a>
+        </div>
+        </div>
+        <div class="container collapse" id="createNew">
+            <div class="card">
+                <div class="card-body">
+            <form id="createUserForm">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="first_name">First Name</label>
+                    <input type="text" class="form-control" id="first_name" placeholder="Jacob">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" placeholder="Peralta">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                        <label for="username">Username</label>
+                        <input type="text" class="form-control" id="username" placeholder="Jake">
+                </div>
+                <div class="form-group col-md-6">
+                        <label for="birthday">Birthday</label>
+                        <input type="date" class="form-control" id="birthday" placeholder="1990-07-04">
+                </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" placeholder="google@gmail.com">
+              </div>
+              <div class="form-group col-md-6">
+                <label for="password">Password</label>
+                <input type="password" class="form-control" id="password" placeholder="********">
+              </div>
+            </div>
+            <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="country">Country</label>
+              <input type="text" class="form-control" id="country" placeholder="The United States of America">
+            </div>
+            <div class="form-group col-md-6">
+              <label for="city">City</label>
+              <input type="text" class="form-control" id="city" placeholder="New-York, Brooklyn">
+            </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label for="district">District</label>
+                <input type="text" class="form-control" id="district" placeholder="Canarsie">
+              </div>
+              <div class="form-group col-md-4">
+                <label for="street">Street</label>
+                <input type="text" class="form-control" id="street" placeholder="47 - Kings">
+              </div>
+              <div class="form-group col-md-2">
+                <label for="zip_code">Zip</label>
+                <input type="text" class="form-control" id="zip_code" placeholder="112236">
+              </div>
+            </div>
+            <button id="CreateUser" type="submit" class="btn btn-primary">Create</button>
+          </form>
+          </div>
+          </div>
         </div>
 
-        <!-- EMAIL -->
-        <div id="email-group" class="form-group">
-            <label for="email">password</label>
-            <input type="password" class="form-control" name="password" placeholder="********">
-            <!-- errors will go here -->
-        </div>
-
-        <button type="submit" class="btn btn-success">Submit <span class="fa fa-arrow-right"></span></button>
-
-    </form>
-
-</div>
-</body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> <!-- load jquery via CDN -->
+    <script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+    <script src="script2.js"></script>
+    </body>
 </html>
