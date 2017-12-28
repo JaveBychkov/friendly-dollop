@@ -3,6 +3,7 @@ from .base import *
 
 DEBUG = False
 
+ALLOWED_HOSTS = ['.simplecloud.ru']
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
