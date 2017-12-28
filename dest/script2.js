@@ -369,6 +369,10 @@ function submitCreateUserForm(form) {
     var username = formData.username;
     var password = form.find($('#password')).val()
     formData['password'] = password;
+    // because we use GatherFormData for updates and creation we need to manualy set
+    // is_active to True on new user creation because this field is not present
+    // in form for new user creatin thus it's allways will be false.
+    formData['is_active'] = true
     var request = $.ajax({
         dataType: 'json',
         type: 'post',
@@ -404,6 +408,8 @@ function submitCreateUserForm(form) {
     request.done( function (data) {
         var table = $('#example').DataTable()
         table.row.add(data).draw();
+        AnimateButton($('#CreateUser'));
+        form[0].reset();
     });
 };
 
