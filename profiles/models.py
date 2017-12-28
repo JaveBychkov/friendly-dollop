@@ -36,5 +36,15 @@ class User(AbstractUser):
             ('view_full_info', "Can see full users info"),
         )
 
+    def delete(self, *args, **kwargs):
+        """Changes default deletion behaviour, so address that belongs to user
+        will also be deleted if user is the only one related to address
+        
+        Not expecting bulk deletions, so overriding delete() method.
+        """
+        if self.address.user_set.count() == 1:
+            self.address.delete()
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return self.username

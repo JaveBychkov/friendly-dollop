@@ -39,6 +39,9 @@ class UserViewSet(viewsets.ModelViewSet):
                           ActivateFirstIfInactive,
                           CantEditSuperuserIfNotSuperuser)
 
+    def destroy(self, request, *args, **kwargs):
+        return super().http_method_not_allowed(request, *args, **kwargs)
+
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
@@ -103,8 +106,8 @@ class SearchView(generics.ListAPIView):
         queryset = User.objects.all()
         active_filter = self.request.query_params.get('is_active')
         if active_filter is not None:
-            # using permission for view full info here because it's meant that
-            # user is admin and can access is_active_filter
+            # using permission for view full info here because it's mean that
+            # user is admin and can access is_active filter
             if self.request.user.has_perm('profiles.view_full_info'):
                 # We need to convert provided active_filter to boolean,
                 # built-in function from distutils.util is used in convertion.

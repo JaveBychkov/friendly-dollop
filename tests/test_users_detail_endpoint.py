@@ -201,3 +201,14 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         response = self.client.patch(self.url(args=[u2.username]),
                                      data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_cant_delete_user(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+
+        response = self.client.delete(self.url(args=[self.regular_user.pk]),
+                                      format='json')
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertTrue(User.objects.filter(pk=self.regular_user.pk).exists())
+
