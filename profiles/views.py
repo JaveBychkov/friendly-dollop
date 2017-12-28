@@ -40,6 +40,7 @@ class UserViewSet(viewsets.ModelViewSet):
                           CantEditSuperuserIfNotSuperuser)
 
     def destroy(self, request, *args, **kwargs):
+        """User deletion is not allowed through API"""
         return super().http_method_not_allowed(request, *args, **kwargs)
 
 
@@ -59,9 +60,6 @@ class GroupViewSet(viewsets.ModelViewSet):
 
     partial_update:
     Updates desired group.
-
-    When using PATCH request to manage group's users you must provide 'action'
-    field which can be either 'add' or 'remove'
     """
     queryset = Group.objects.annotate(users_count=Count('user'))
     serializer_class = GroupSerializer
@@ -83,10 +81,11 @@ class UserGroupsView(generics.RetrieveUpdateAPIView):
     """
     queryset = User.objects.all()
     serializer_class = UserGroupsSerializer
-    # disabling PATCH method
-    http_method_names = ['get', 'put', 'options', 'head']
     lookup_field = 'username'
     lookup_url_kwarg = 'username'
+
+    def partial_update(self, request, *args, **kwargs):
+        return super().http_method_not_allowed(request, *args, **kwargs)
 
 
 class SearchView(generics.ListAPIView):
