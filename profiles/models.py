@@ -23,7 +23,7 @@ class User(AbstractUser):
         auto_now=True, help_text='Date of last information update.'
     )
 
-    # Redifine some existing fields here to reduce visual noise in serializers.
+    # Redefine some existing fields here to reduce visual noise in serializers.
 
     first_name = models.CharField(max_length=128,
                                   help_text='User\'s first name')
