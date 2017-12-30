@@ -24,15 +24,12 @@ class UserGroupsSerializer(serializers.Serializer):
             instance.groups.set(groups)
             return instance
 
-class GroupDetailSerializer(serializers.ModelSerializer):
+class GroupDetailSerializer(serializers.HyperlinkedModelSerializer):
 
     """
     Serializer for group's details.
     """
 
-    url = serializers.HyperlinkedIdentityField(view_name='api:group-detail',
-                                               lookup_field='name',
-                                               read_only=True)
     users_count = serializers.IntegerField(read_only=True)
     users = serializers.SlugRelatedField(many=True, slug_field='username',
                                          queryset=User.objects.all(),
@@ -40,6 +37,8 @@ class GroupDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ('url', 'name', 'users_count', 'users')
+        extra_kwargs = {'url': {'view_name': 'api:group-detail',
+                                'lookup_field': 'name'}}
 
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -53,20 +52,21 @@ class GroupDetailSerializer(serializers.ModelSerializer):
         return instance
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class GroupSerializer(serializers.HyperlinkedModelSerializer):
     """
     Group list serializer.
 
     users_count - field that represents ammount of users in group, passed from
     view as annotation.
     """
-    url = serializers.HyperlinkedIdentityField(view_name='api:group-detail',
-                                               lookup_field='name')
+
     users_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Group
         fields = ('url', 'name', 'users_count',)
+        extra_kwargs = {'url': {'view_name': 'api:group-detail',
+                                'lookup_field': 'name'}}
 
     def create(self, validated_data):
         # we need to override create method to handle annotation
@@ -82,7 +82,7 @@ class AddressSerializer(serializers.ModelSerializer):
         fields = ('zip_code', 'country', 'city', 'district', 'street')
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.HyperlinkedModelSerializer):
     """
     User status aware serializer, if user is not admin - will return
     basic fields representation.
@@ -103,8 +103,6 @@ class UserSerializer(serializers.ModelSerializer):
                 self.fields.pop(field)
 
 
-    url = serializers.HyperlinkedIdentityField(view_name='api:user-detail',
-                                               lookup_field='username')
     address = AddressSerializer()
     groups = serializers.SlugRelatedField(
         read_only=True,
@@ -123,7 +121,9 @@ class UserSerializer(serializers.ModelSerializer):
                         'date_joined': {'read_only': True,
                                         'format': '%Y-%m-%d %H:%M:%S'},
                         'last_update': {'read_only': True,
-                                        'format': '%Y-%m-%d %H:%M:%S'}
+                                        'format': '%Y-%m-%d %H:%M:%S'},
+                        'url': {'view_name': 'api:user-detail',
+                                'lookup_field': 'username'}
                        }
 
     # Defining create and update method because we have customized the way
