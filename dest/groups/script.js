@@ -95,7 +95,7 @@ $(document).ready(function() {
                 tr.removeClass('shown');
             }
             else {
-                row.child( [groupInfo(row.data(), row), ChangeGroupUsers(row.data(), row)] ).show();
+                row.child( [groupInfo(row.data(), row), ChangeGroupUsers(row.data(), row), DeleteGroup(row.data(), row)] ).show();
                 tr.addClass('shown');
             }
         });
@@ -114,6 +114,29 @@ $(document).ready(function() {
         }
     }); // end ajax
 });
+
+function DeleteGroup(data, row) {
+    var button = $('<button>', {'class': 'btn btn-danger', 'type': 'button', 'id': 'deleteGroup'}).text('Delete Group');
+    $(button).on('click', function() {
+        var request = $.ajax({
+            dataType: 'json',
+            type: 'delete',
+            url: '../api/groups/'+data.name+'/',
+            headers: {
+                "Authorization": "Token " + localStorage.getItem("token"),
+                "Content-Type": "application/json; charset=utf-8"
+            }
+        });
+        request.fail(function(data) {
+            console.log(data.responseJSON);
+        });
+        request.done(function(data) {
+            var table = $('#example').DataTable()
+            table.row(row).remove().draw( false );
+        });
+    });
+    return button;
+}
 
 function groupInfo(data, row) {
     var tmpl = $('<div>', {'class': 'card'}).append(
@@ -149,7 +172,7 @@ function groupInfo(data, row) {
             data: JSON.stringify({'name': name}),
         });
 
-        request.fail(function(data) {
+        request.fail(function (data) {
             console.log(data.responseJSON)
         });
 
@@ -216,10 +239,10 @@ function ChangeGroupUsers(GroupData, row) {
             for (var i = 0; i < data.length; i++) {
                 UsersArray.push(data[i].username);
             }
-
-            for ( var i = 0; i < UsersArray.length; i++ ) {
+            var diff = $(UsersArray).not(usersOfGroup).get();
+            for ( var i = 0; i < diff.length; i++ ) {
                 allUsers.find('select').append(
-                    $('<option>', {'value': UsersArray[i]}).text(UsersArray[i])
+                    $('<option>', {'value': diff[i]}).text(diff[i])
                 )
             }
             main_block.append($('<button>', {'class': 'btn btn-primary', 'type': 'submit', 'id': 'updateGroupUsers'}).text('Update Groups'));

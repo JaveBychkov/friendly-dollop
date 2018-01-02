@@ -26,7 +26,7 @@ function AnimateButton(button) {
     };
 };
 
-function GetData() {
+function GetUserData() {
     var request = $.ajax({
         dataType: 'json',
         type: 'get',
@@ -34,8 +34,24 @@ function GetData() {
         headers: {
             "Authorization": "Token " + localStorage.getItem("token")
         },
-        encode: true
     });
+    return request
+};
+
+function GetActiveUserData() {
+    var request = $.ajax({
+        dataType: 'json',
+        type: 'get',
+        url: '/api/users/search?is_active=true',
+        headers: {
+            "Authorization": "Token " + localStorage.getItem("token")
+        },
+    });
+    return request
+};
+
+function BuildTable() {
+    var request = GetUserData();
 
     request.fail(function(data) {
         console.log(data.responseJSON);
@@ -54,6 +70,7 @@ function GetData() {
                 {'data': 'first_name'},
                 {'data': 'last_name'},
                 {'data': 'username'},
+                {'data': 'birthday'},
                 {'data': 'email'}
             ]
          });
@@ -85,12 +102,38 @@ function GetData() {
                         'aria-controls': 'createNew',
                         'id': 'createNewButton'}).text('Create New User')
             );
-                $('#createUserForm').unbind('submit').bind('submit', function (event) { 
-                    var form = $(this);
-                    $('.form-row>div>input.is-invalid').removeClass('is-invalid');
-                    $('.invalid-feedback').remove();
-                    submitCreateUserForm(form);
-                    event.preventDefault();
+
+            $('#createUserForm').unbind('submit').bind('submit', function (event) { 
+                var form = $(this);
+                $('.form-row>div>input.is-invalid').removeClass('is-invalid');
+                $('.invalid-feedback').remove();
+                submitCreateUserForm(form);
+                event.preventDefault();
+            });
+
+            $('#example').closest('.container').prepend(
+                $('<button>', {'id': 'activeFilter', 'class': 'btn btn-primary', 'type': 'button'}).text('Show only active users')
+            );
+
+            $('#activeFilter').on('click', function() {
+                var button = $(this);
+                if (! button.hasClass('filtered') ) {
+                    var request = GetActiveUserData();
+                    request.done(function(data) {
+                        button.addClass('filtered')
+                        table.clear();
+                        table.rows.add(data).draw();
+                        button.text('Show All Users')
+                    });
+                } else {
+                    var request = GetUserData();
+                    request.done(function(data) {
+                        button.removeClass('filtered')
+                        table.clear();
+                        table.rows.add(data).draw();
+                        button.text('Show only active users')
+                        });
+                    }
                 });
         }
     });
@@ -104,7 +147,7 @@ $(document).ready(function() {
         localStorage.removeItem('is_admin');
         window.location.replace('/login/');
     });
-    GetData();
+    BuildTable();
 });
 
 var formProperties = {
