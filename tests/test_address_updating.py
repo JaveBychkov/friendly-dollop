@@ -78,10 +78,24 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertTrue(serializer.is_valid())
 
         saved_obj = serializer.save()
-        self.assertNotEqual(saved_obj, self.address)
-        self.assertNotEqual(saved_obj, address)
+        self.assertNotEqual(saved_obj.address, self.address)
+        self.assertNotEqual(saved_obj.address, address)
         self.assertEqual(Address.objects.count(), 3)
         self.assertEqual(user1.address.street, 'High Low')
         self.assertEqual(saved_obj.address.street, 'Different')
         self.assertEqual(user2, saved_obj)
         self.assertEqual(user2.address.street, 'Different')
+
+    def test_on_update_change_address_data_if_similar_address_not_exists_and_address_have_only_one_user(self):
+        payload = {'address': {'city': 'Кстово', 'country': 'Россия'}}
+        
+        serializer = UserSerializer(self.user, data=payload, partial=True)
+
+        self.assertTrue(serializer.is_valid())
+        saved_obj = serializer.save()
+
+        self.assertEqual(saved_obj.address, self.address)
+        self.assertEqual(Address.objects.count(), 1)
+        self.assertEqual(saved_obj.address.city, 'Кстово')
+        self.assertEqual(saved_obj.address.country, 'Россия')
+

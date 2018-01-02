@@ -4,5 +4,7 @@ __pycache__/
 *.sublime-workspace
 *.sqlite3
 *.vscode/
+*.coverage
 fabfile.py
 static/
+htmlcov/

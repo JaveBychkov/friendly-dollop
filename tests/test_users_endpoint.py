@@ -95,11 +95,7 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
         # was created.
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        try:
-            sarah = User.objects.get(username='Sarah1234')
-        except User.DoesNotExist:
-            msg = 'Can\'t retrive user with username Sarah1234'
-            self.fail(msg=msg)
+        sarah = User.objects.get(username='Sarah1234')
 
         # Checking that view returns created user.
         # Removing password from payload and updating it to use it
