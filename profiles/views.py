@@ -7,7 +7,8 @@ from rest_framework import permissions
 
 from .models import User
 from .permissions import (ActivateFirstIfInactive,
-                          CantEditSuperuserIfNotSuperuser)
+                          CantEditSuperuserIfNotSuperuser,
+                          DissallowAdminGroupDeletion)
 from .serializers import (GroupDetailSerializer, GroupSerializer,
                           UserGroupsSerializer, UserSerializer)
 from .utils import convert_date
@@ -64,6 +65,9 @@ class GroupViewSet(viewsets.ModelViewSet):
     queryset = Group.objects.annotate(users_count=Count('user'))
     serializer_class = GroupSerializer
     lookup_field = 'name'
+    permission_classes = (permissions.IsAuthenticated,
+                          permissions.DjangoModelPermissions,
+                          DissallowAdminGroupDeletion)
 
     def get_serializer_class(self):
         if self.action in ['retrieve', 'update', 'partial_update']:

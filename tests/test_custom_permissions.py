@@ -1,76 +1,115 @@
-
 from rest_framework.test import APITestCase, APIRequestFactory
 
 from profiles.permissions import (ActivateFirstIfInactive,
-                                  CantEditSuperuserIfNotSuperuser)
+                                  CantEditSuperuserIfNotSuperuser,
+                                  DissallowAdminGroupDeletion)
 
-from .utils import CreateUsersMixin, create_user
+from .utils import (CreateUsersMixin, create_user, create_admin_group,
+                    create_group)
 
 
-class CustomPermissionsTestCase(CreateUsersMixin, APITestCase):
-    """Test Case to test that custom permissions works as expected"""
+class TestActivateFirstIfInactivePermission(CreateUsersMixin, APITestCase):
 
     def setUp(self):
         super().setUp()
+        self.permission = ActivateFirstIfInactive()
         self.safe_request = APIRequestFactory().get('/something/')
         self.request = APIRequestFactory().patch('/something/')
         self.request.data = {}
+        self.inactive_user = create_user('Robert', 'robert@email.com',
+                                         is_active=False)
         self.view = 'Dummy'
 
-    def test_admin_cant_change_user_data_if_user_is_not_active(self):
-        """Check that permission acts correctly in different occasions"""
-        permission = ActivateFirstIfInactive()
-        inactive_user = create_user('Robert', 'robert@email.com', is_active=False)
-
-        # Check that permission will be denied if request method is not safe
-        # and user is inactive.
-        self.assertFalse(permission.has_object_permission(
-            self.request, self.view, inactive_user
+    def test_return_false_if_user_is_inactive_and_method_is_not_safe(self):
+        self.assertFalse(self.permission.has_object_permission(
+            self.request, self.view, self.inactive_user
         ))
 
-        # Check that permission will be allowed if user is inactive but request
-        # method is safe.
-        self.assertTrue(permission.has_object_permission(
-            self.safe_request, self.view, inactive_user
+    def test_return_true_if_user_is_inactive_and_method_is_safe(self):
+        self.assertTrue(self.permission.has_object_permission(
+            self.safe_request, self.view, self.inactive_user
         ))
 
-        # Check that permission will be allowed if user is inactive and request
-        # method is not safe but request.data has is_active set to True.
+    def test_return_true_if_data_in_request_has_is_active_set_to_true(self):
         self.request.data = {'is_active': True}
-        self.assertTrue(permission.has_object_permission(
-            self.request, self.view, inactive_user
+        self.assertTrue(self.permission.has_object_permission(
+            self.request, self.view, self.inactive_user
         ))
 
-    def test_admin_cant_change_superuser_data(self):
-        """Test that noone except superusers can change superuser data"""
-        permission = CantEditSuperuserIfNotSuperuser()
+    def test_return_true_if_user_is_active(self):
+        self.assertTrue(self.permission.has_object_permission(
+            self.safe_request, self.view, self.regular_user
+        ))
+
+class TestDissallowAdminGroupDeletionPermission(CreateUsersMixin, APITestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.permission = DissallowAdminGroupDeletion()
+        self.delete_request = APIRequestFactory().delete('/something/')
+        self.safe_request = APIRequestFactory().get('/something/')
+        self.group = create_group(name='Managers')
+        self.view = 'Dummy'
+
+    def test_return_false_if_group_is_admin_group(self):
+        self.delete_request.user = self.admin_user
+        self.assertFalse(self.permission.has_object_permission(
+            self.delete_request, self.view, self.admin_group
+        ))
+
+    def test_return_true_for_superusers_even_if_group_is_admin_group(self):
         superuser = create_user('Robert', 'robert@email.com',
                                 is_staff=True, is_superuser=True)
-        superuser_2 = create_user('Roberto', 'roberto@email.com',
+
+        self.delete_request.user = superuser
+
+        self.assertTrue(self.permission.has_object_permission(
+            self.delete_request, self.view, self.admin_group
+        ))
+
+    def test_return_true_if_group_is_regular_group(self):
+        self.delete_request.user = self.admin_user
+        self.assertTrue(self.permission.has_object_permission(
+            self.delete_request, self.view, self.group
+        ))
+
+    def test_return_true_if_request_method_is_safe(self):
+        self.safe_request.user = self.admin_user
+        self.assertTrue(self.permission.has_object_permission(
+            self.delete_request, self.view, self.group
+        ))
+
+
+
+class TestCantEditSuperUserIfNotSuperuser(CreateUsersMixin, APITestCase):
+    
+    def setUp(self):
+        super().setUp()
+        self.permission = CantEditSuperuserIfNotSuperuser()
+        self.safe_request = APIRequestFactory().get('/something/')
+        self.request = APIRequestFactory().patch('/something/')
+        self.superuser = create_user('Robert', 'robert@email.com',
+                                is_staff=True, is_superuser=True)
+        self.superuser_2 = create_user('Roberto', 'roberto@email.com',
                                   is_staff=True, is_superuser=True)
-        editor = create_user('Veronika', 'veronika@email.com',
+        self.editor = create_user('Veronika', 'veronika@email.com',
                              is_staff=True, is_superuser=False)
-        self.admin_group.user_set.add(superuser, editor)
+        self.admin_group.user_set.add(self.superuser, self.editor)
+        self.view = 'Dummy'
 
-        self.request.user = editor
-
-        # Check that permission will be denied if admin who attempts to change
-        # superuser is not superuser
-        self.assertFalse(permission.has_object_permission(
-            self.request, self.view, superuser
-        ))
-        
-        # Check that permission will be allowed if request method is safe
-        self.assertTrue(permission.has_object_permission(
-            self.safe_request, self.view, superuser
+    def test_return_false_if_not_superuser_editing_superuser(self):
+        self.request.user = self.editor
+        self.assertFalse(self.permission.has_object_permission(
+            self.request, self.view, self.superuser
         ))
 
-        # Check that permission will be allowed if user who attempts to change
-        # superuser is also superuser
-        self.request.user = superuser_2
-        self.assertTrue(permission.has_object_permission(
-            self.request, self.view, superuser
+    def test_return_true_if_request_method_is_safe(self):
+        self.assertTrue(self.permission.has_object_permission(
+            self.safe_request, self.view, self.superuser
         ))
 
-
-
+    def test_return_true_if_superuser_editing_superuser(self):
+        self.request.user = self.superuser_2
+        self.assertTrue(self.permission.has_object_permission(
+            self.request, self.view, self.superuser
+        ))

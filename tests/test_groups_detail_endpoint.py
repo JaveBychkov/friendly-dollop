@@ -202,3 +202,40 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admins_can_delete_groups(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        group = create_group(name='Managers')
+
+        response = self.client.delete(
+            reverse('api:group-detail', args=[group.name]),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_admins_cant_delete_admin_group(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        response = self.client.delete(
+            reverse('api:group-detail', args=[self.admin_group.name]),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_superuser_can_delete_admin_group(self):
+        self.admin_user.is_superuser = True
+        self.admin_user.save()
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+        response = self.client.delete(
+            reverse('api:group-detail', args=[self.admin_group.name]),
+            format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

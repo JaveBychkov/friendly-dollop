@@ -19,6 +19,18 @@ class ActivateFirstIfInactive(permissions.BasePermission):
             return status is not None and status
         return True
 
+
+class DissallowAdminGroupDeletion(permissions.BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        # Probably its not most efficient way to determine whether a group is 
+        # admin group but hardcoding group name here is not a good way either.
+        has_perm = obj.permissions.filter(codename='view_full_info')
+        if request.method.lower() == 'delete' and has_perm:
+            return request.user.is_superuser
+        return True
+
+
 class CantEditSuperuserIfNotSuperuser(permissions.BasePermission):
     """Object level permission that will disallow editing superuser data
     until user that submiting changes is superuser

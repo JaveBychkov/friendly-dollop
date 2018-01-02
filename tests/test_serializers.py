@@ -150,9 +150,9 @@ class GroupSerializerTestCase(APITestCase):
                  reverse('api:group-detail', args=[staff.name])
              )}
         ]
-        serialzier = GroupSerializer(query, many=True,
+        serializer = GroupSerializer(query, many=True,
                                      context={'request': self.request})
-        self.assertEqual(serialzier.data, group_data)
+        self.assertCountEqual(serializer.data, group_data)
 
 
 class AddressSerializerTestCase(APITestCase):

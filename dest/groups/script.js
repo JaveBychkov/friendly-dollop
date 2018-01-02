@@ -118,6 +118,7 @@ $(document).ready(function() {
 function DeleteGroup(data, row) {
     var button = $('<button>', {'class': 'btn btn-danger', 'type': 'button', 'id': 'deleteGroup'}).text('Delete Group');
     $(button).on('click', function() {
+        button.parent().find('.invalid-feedback').remove();
         var request = $.ajax({
             dataType: 'json',
             type: 'delete',
@@ -128,6 +129,7 @@ function DeleteGroup(data, row) {
             }
         });
         request.fail(function(data) {
+            $(button).parent().prepend('<div class="invalid-feedback">' + data.responseJSON['detail'] + '</div>')
             console.log(data.responseJSON);
         });
         request.done(function(data) {
