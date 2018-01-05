@@ -13,15 +13,6 @@
 В проекте имеются тесты.
 
 Проект находится по адресу [http://164413.simplecloud.ru/](http://164413.simplecloud.ru/) 
-Для авторизации как администратор:
-
-- username: Administrator
-- password: Administrator
-
-Для авторизации как обычный пользователь:
-
-- username: RegularUser
-- password:	RegularUser
 
 TODO:
 1. Оптимизировать запросы к базе.
