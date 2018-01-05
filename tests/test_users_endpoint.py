@@ -1,7 +1,8 @@
 from django.urls import reverse
 
 from rest_framework import status
-from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
+from rest_framework.test import (APITestCase, APIRequestFactory,
+                                 force_authenticate)
 
 from profiles.serializers import UserSerializer
 from profiles.models import User
@@ -28,6 +29,7 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
         # Dummy requests that needed for our UserSerializer.
         self.request = APIRequestFactory().post('/something/')
         self.safe_request = APIRequestFactory().get('/something/')
+        self.context = {'request': self.safe_request}
 
 
     # Because we successfully tested our serializers to return data in
@@ -40,7 +42,7 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
 
         queryset = User.objects.all()
         serialized_data = UserSerializer(queryset, many=True,
-                                         context={'request': self.safe_request})
+                                         context=self.context)
 
         # loging in as admin user
         self.client.credentials(
@@ -62,7 +64,7 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
 
         queryset = User.objects.all()
         serialized_data = UserSerializer(queryset, many=True,
-                                         context={'request': self.safe_request})
+                                         context=self.context)
         # loging in as regular user
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.regular_user.auth_token.key
@@ -70,8 +72,6 @@ class TestUserListEndPoint(CreateUsersMixin, APITestCase):
         response = self.client.get(reverse('api:user-list'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, serialized_data.data)
-        # Just little additional check,
-        # we actualy tested it in test_serializers.
         # Using index here, because serializer have many=True agrument, and our
         # response.data will be wrapped in list.
         self.assertNotIn('id', response.data[0])

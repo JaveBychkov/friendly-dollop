@@ -25,7 +25,8 @@ class GroupListEndPoint(CreateUsersMixin, APITestCase):
         # Manual "annotation":
         self.admin_group.users_count = 1
         serialized_data = GroupSerializer(
-            [self.admin_group], context={'request': self.safe_request}, many=True
+            [self.admin_group], context={'request': self.safe_request},
+            many=True
         ).data
 
         response = self.client.get(reverse('api:group-list'))

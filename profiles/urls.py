@@ -12,7 +12,8 @@ router.register(r'groups', views.GroupViewSet)
 
 urlpatterns = [
     url(r'^users/search$', views.SearchView.as_view(), name='search'),
-    url(r'^users/(?P<username>[\w-]+)/groups/$', views.UserGroupsView.as_view(),
+    url(r'^users/(?P<username>[\w-]+)/groups/$',
+        views.UserGroupsView.as_view(),
         name='user-groups')
 ]
 

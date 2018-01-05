@@ -65,7 +65,7 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
         # first_name, last_name, username, email, birthday, address
         # We need to add is_active, password, fields and modify
         # some existing fields.
-        # Using regular user as context to reduce ammount of fields to override.
+        # Using regular user as context to reduce ammount of fields to override
         self.request.user = self.regular_user
         serialized_data = UserSerializer(
             self.regular_user, context={'request': self.request}
@@ -107,8 +107,10 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
             self.regular_user, context={'request': self.request}
         ).data
 
-        response = self.client.patch(self.url(args=[self.regular_user.username]),
-                                     data=payload, format='json')
+        response = self.client.patch(
+            self.url(args=[self.regular_user.username]),
+            data=payload, format='json'
+        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Reloading user from database to check if changes was applied to user.
@@ -179,8 +181,10 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
                 ]
             }
         }
-        response = self.client.patch(self.url(args=[self.regular_user.username]),
-                                     data=payload, format='json')
+        response = self.client.patch(
+            self.url(args=[self.regular_user.username]),
+            data=payload, format='json'
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, error)
         # Refecth user to make sure address and other data didn't changed
@@ -209,6 +213,7 @@ class TestUserDetailEndPoint(CreateUsersMixin, APITestCase):
 
         response = self.client.delete(self.url(args=[self.regular_user.pk]),
                                       format='json')
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
-        self.assertTrue(User.objects.filter(pk=self.regular_user.pk).exists())
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
 
+        self.assertTrue(User.objects.filter(pk=self.regular_user.pk).exists())

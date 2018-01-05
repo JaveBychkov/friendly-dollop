@@ -11,8 +11,27 @@ from .models import User, Address
 class UserGroupsSerializer(serializers.Serializer):
     """Serializer for user's group, used in /users/username/groups endpoint"""
 
-    groups = serializers.SlugRelatedField(many=True, slug_field='name',
-                                          queryset=Group.objects.all())
+    groups = serializers.SlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Group.objects.all()
+    )
+
+    def validate_groups(self, data):
+        """This validation meant to ensure that there will be atleast one
+        admin in system.
+        """
+        try:
+            admin_group = self.instance.groups.get(
+                permissions__codename='add_user'
+            )
+            if admin_group.name not in data and admin_group.user_set.count() == 1:
+                raise serializers.ValidationError(
+                    detail='Administrator group must have atleast one member'
+                )
+            return data
+        except Group.DoesNotExist:
+            return data
 
     @transaction.atomic
     def update(self, instance, validated_data):
@@ -34,6 +53,20 @@ class GroupDetailSerializer(serializers.HyperlinkedModelSerializer):
     users = serializers.SlugRelatedField(many=True, slug_field='username',
                                          queryset=User.objects.all(),
                                          source='user_set')
+
+    def validate_users(self, data):
+        """This validation meant to ensure that there will be atleast one
+        admin in system.
+        """
+        is_admin_group = self.instance.permissions.filter(
+            codename='add_user'
+        ).exists()
+        if is_admin_group and not data:
+            raise serializers.ValidationError(
+                detail='Administrator group must have atleast one member'
+            )
+        return data
+
     class Meta:
         model = Group
         fields = ('url', 'name', 'users_count', 'users')

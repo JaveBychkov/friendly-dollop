@@ -95,7 +95,9 @@ class UserGroupsTestCase(CreateUsersMixin, APITestCase):
         # refetch user from db to reload relations.
         self.regular_user = User.objects.get(username='Lenka')
         self.assertEqual(self.regular_user.groups.count(), 1)
-        self.assertTrue(self.regular_user.groups.filter(name='Managers').exists())
+        self.assertTrue(
+            self.regular_user.groups.filter(name='Managers').exists()
+        )
 
         serialized_data = UserGroupsSerializer(self.regular_user).data
         self.assertEqual(response.data, serialized_data)
@@ -108,7 +110,8 @@ class UserGroupsTestCase(CreateUsersMixin, APITestCase):
         error = {'detail': 'Method "PATCH" not allowed.'}
 
         response = self.client.patch(self.url, data={}, format='json')
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
         self.assertEqual(response.data, error)
 
     def test_regular_user_cant_update_users_groups(self):
@@ -165,8 +168,22 @@ class UserGroupsTestCase(CreateUsersMixin, APITestCase):
         )
         self.regular_user.groups.add(create_group(name='Managers'),
                                      create_group(name='Sales'))
-        response = self.client.put(self.url, data={'groups': []}, format='json')
-        # refetch user
+        response = self.client.put(
+            self.url, data={'groups': []}, format='json'
+        )
 
+        # refetch user
         user = User.objects.get(pk=self.regular_user.pk)
         self.assertFalse(user.groups.all().exists())
+
+    def test_admin_cant_remove_admin_group_from_user_if_user_last_member(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+
+        response = self.client.put(reverse(
+            'api:user-groups',
+            kwargs={'username': self.admin_user.username}
+            ), data={'groups': []}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

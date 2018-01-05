@@ -330,6 +330,7 @@ function UpdateGroupsForm(rowData) {
             });
 
             $(main_block).unbind('submit').bind('submit', function(event) {
+                main_block.find('.invalid-feedback').remove();
                 var groups = userGroups.find('select').children();
                 var groupNames = [];
                 $.each(groups, function(i, group) {
@@ -349,6 +350,7 @@ function UpdateGroupsForm(rowData) {
                 });
             
                 request.fail( function (data) {
+                    $(mainblock).prepend('<div class="invalid-feedback">' + data.responseJSON['groups'] + '</div>')
                     console.log(data.responseJSON);
                 });
                 request.done( function (data) {
@@ -377,7 +379,7 @@ function unpackObj(obj, user={}) {
     for ( var property in obj ) {
         if ( obj.hasOwnProperty(property) ) {
             if (typeof obj[property] === 'object' && ! Array.isArray(obj[property])) {
-                unpackObj(obj[property], user);
+                user = unpackObj(obj[property], user);
             } else {
                 user[property] = obj[property]
             }

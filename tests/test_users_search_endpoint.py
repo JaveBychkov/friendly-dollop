@@ -16,7 +16,8 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
     def setUp(self):
         super().setUp()
 
-        create_user('Robz', 'robz@email.com', first_name='Robin', last_name='Sparkles')
+        create_user('Robz', 'robz@email.com', first_name='Robin',
+                    last_name='Sparkles')
         create_user('John', 'jackkennedy@usgov.com')
         create_user('Lily', 'lily@email.com', birthday=date(1990, 2, 21))
         create_user('Something', 'some1@email.com', is_active=False)
@@ -27,6 +28,7 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
         self.safe_request.user = self.admin_user
         self.search_url = reverse('api:search') + '?q={}'
         self.search_active_filter = reverse('api:search') + '?is_active={}'
+        self.context = {'request': self.safe_request}
 
     def test_users_can_search_for_users_by_part_of_their_name(self):
         """
@@ -42,7 +44,7 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
         # UserSerializer([user], many=True)
         user = User.objects.filter(username='Robz')
         serializer = UserSerializer(user, many=True,
-                                    context={'request': self.safe_request})
+                                    context=self.context)
         # Searching by first_name.
         search_param = 'Robin'
 
@@ -65,7 +67,7 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
         )
         user = User.objects.filter(username='John')
         serializer = UserSerializer(user, many=True,
-                                    context={'request': self.safe_request})
+                                    context=self.context)
 
         search_param = 'jackkennedy@usgov.com'
 
@@ -93,7 +95,7 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
         )
         user = User.objects.filter(username='Lily')
         serializer = UserSerializer(user, many=True,
-                                    context={'request': self.safe_request})
+                                    context=self.context)
         # Trying different date formats:
         search_params = ['1990-02-21', '21-02-1990', '21-02-90']
 
@@ -113,7 +115,7 @@ class TestAPISearch(CreateUsersMixin, APITestCase):
         # Filtering by active users
         queryset = User.objects.filter(is_active=True)
         serializer = UserSerializer(queryset, many=True,
-                                    context={'request': self.safe_request})
+                                    context=self.context)
 
         allowed_values = ['y', 'yes', 't', 'true', 'on', '1']
         for param in allowed_values:

@@ -13,7 +13,8 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.data = {'zip_code': '543211', 'country': 'Germany',
                     'city': 'Berlin', 'district': 'West', 'street': 'Big Low'}
         self.address = create_address(**self.data)
-        self.user = create_user('Dmitriy', 'dmitriy@mail.com', address=self.address)
+        self.user = create_user('Dmitriy', 'dmitriy@mail.com',
+                                address=self.address)
 
     def test_do_nothing_if_submitted_data_is_exact_as_it_was(self):
         self.assertEqual(Address.objects.count(), 1)
@@ -29,7 +30,10 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(self.data, address_data)
         self.assertEqual(Address.objects.count(), 1)
 
-    def test_on_creating_assign_user_to_existing_address_if_submitted_address_data_already_exists(self):
+    def test_on_creating_assign_user_to_existing_address(self):
+        """Test that newly created user will get already existing address if 
+        provided data fully match with one of the adresses in system.
+        """
         payload = {'first_name': 'Sarah',
                    'last_name': 'Chalke', 'username': 'Sarah1234',
                    'password': 'iamsarah',
@@ -46,8 +50,10 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertCountEqual(self.address.user_set.all(),
                               [created_obj, self.user])
 
-    def test_on_update_assign_user_to_existing_address_if_submitted_address_data_already_exists(self):
-        # Also test that previous address will be deleted if it has no other users
+    def test_on_update_assign_user_to_existing_address(self):
+        """Test that user will get already existing address if provided data
+        fully match with one of the adresses in system.
+        """
         self.data.update({'street': 'High Low'})
         user = create_user('Olga', 'olga@mail.com',
                            address=create_address(**self.data))
@@ -59,9 +65,14 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertTrue(serializer.is_valid())
         saved_obj = serializer.save()
         self.assertEqual(saved_obj.address, self.address)
+        # Also tests that previous address will be deleted if it
+        # has no other users.
         self.assertEqual(Address.objects.count(), 1)
 
-    def test_on_update_previous_address_will_not_be_deleted_if_it_has_more_than_one_user_new_one_will_be_created_instead(self):
+    def test_on_update_previous_address_will_not_be_deleted(self):
+        """Test that previous address will not be deleted if it has more than
+        one user instead new address will be created.
+        """
         self.data.update({'street': 'High Low'})
         address = create_address(**self.data)
         user1 = create_user('Olga', 'olga@mail.com',
@@ -86,9 +97,13 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(user2, saved_obj)
         self.assertEqual(user2.address.street, 'Different')
 
-    def test_on_update_change_address_data_if_similar_address_not_exists_and_address_have_only_one_user(self):
+    def test_on_update_change_address_data_if(self):
+        """Test that on update address data will be changed if address
+        with provided data not exists and current address have only one
+        user
+        """
         payload = {'address': {'city': 'Кстово', 'country': 'Россия'}}
-        
+
         serializer = UserSerializer(self.user, data=payload, partial=True)
 
         self.assertTrue(serializer.is_valid())
@@ -98,4 +113,3 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(Address.objects.count(), 1)
         self.assertEqual(saved_obj.address.city, 'Кстово')
         self.assertEqual(saved_obj.address.country, 'Россия')
-

@@ -1,12 +1,15 @@
 from django.contrib.auth.models import Group
 from django.db.models import Count
+from django.forms.models import model_to_dict
 from django.urls import reverse
 
 from rest_framework.test import APIRequestFactory, APITestCase
 
+from profiles.models import User
 from profiles.serializers import (AddressSerializer, GroupDetailSerializer,
                                   GroupSerializer, UserGroupsSerializer,
                                   UserSerializer)
+
 from .utils import (CreateUsersMixin, create_address, create_admin_group,
                     create_group, create_user)
 
@@ -20,6 +23,7 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         self.group = create_group('Managers')
         self.request = APIRequestFactory().get('something')
         self.build_url = self.request.build_absolute_uri
+        self.context = {'request': self.request}
 
     def test_returns_data_in_expected_format(self):
         """Test serializer return user data in expected format"""
@@ -30,8 +34,7 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
                       'users': []}
         # Little hack to set field that normaly will be annotated in view.
         self.group.users_count = 0
-        serializer = GroupDetailSerializer(self.group,
-                                           context={'request': self.request})
+        serializer = GroupDetailSerializer(self.group, context=self.context)
         self.assertEqual(serializer.data, group_data)
 
     def test_update_method_adds_users(self):
@@ -49,7 +52,7 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
                              u1.username,
                              u2.username]}
         serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
+                                           context=self.context,
                                            partial=True)
         serializer.is_valid()
         instance = serializer.save()
@@ -63,9 +66,9 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         user1 = create_user('user1', 'user1@email.com')
         user2 = create_user('user2', 'user2@email.com')
         self.group.user_set.add(user1, user2)
-        payload = {'users': [user2.username],}
+        payload = {'users': [user2.username]}
         serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
+                                           context=self.context,
                                            partial=True)
         serializer.is_valid()
         instance = serializer.save()
@@ -73,15 +76,45 @@ class GroupDetailSerializerTestCase(CreateUsersMixin, APITestCase):
         self.assertTrue(instance.user_set.filter(username='user2').exists())
 
     def test_name_update(self):
-        self.request.method = 'PATCH'
         """Test that update method will override group name"""
+        self.request.method = 'PATCH'
         payload = {'name': 'NotManagers'}
         serializer = GroupDetailSerializer(self.group, data=payload,
-                                           context={'request': self.request},
+                                           context=self.context,
                                            partial=True)
         serializer.is_valid()
         instance = serializer.save()
         self.assertEqual(instance.name, 'NotManagers')
+
+    def test_validation_fails_for_admin_group_if_users_is_empty(self):
+        payload = {'users': []}
+
+        serializer = GroupDetailSerializer(self.admin_group, data=payload,
+                                           context=self.context,
+                                           partial=True)
+
+        self.assertFalse(serializer.is_valid())
+
+    def test_validation_not_fails_for_admin_group_if_users_not_empty(self):
+
+        user = create_user('Tatyana', 'Tatyana@mail.com')
+
+        payload = {'users': [user.username]}
+
+        serializer = GroupDetailSerializer(self.admin_group, data=payload,
+                                           context=self.context,
+                                           partial=True)
+
+        self.assertTrue(serializer.is_valid())
+
+
+    def test_validation_not_fails_for_not_admin_groups_if_users_is_empty(self):
+        payload = {'users': []}
+
+        serializer = GroupDetailSerializer(self.group, data=payload,
+                                           context=self.context,
+                                           partial=True)
+        self.assertTrue(serializer.is_valid())
 
 
 class UserGroupsSerializerTestCase(APITestCase):
@@ -90,6 +123,9 @@ class UserGroupsSerializerTestCase(APITestCase):
     expected format.
     """
     def setUp(self):
+        self.admin_group = create_admin_group()
+        self.admin = create_user('Dmitriy', 'dmitriy@mail.com')
+        self.admin_group.user_set.add(self.admin)
         self.user = create_user('Daniel', 'daniel@email.com')
         self.user.groups.add(create_group('Staff'), create_group('Managers'))
 
@@ -116,7 +152,7 @@ class UserGroupsSerializerTestCase(APITestCase):
 
     def test_serializer_method_overrides_user_groups(self):
         """Test that .update method updates groups as expected
-        In this case: removes two existing groups and assign one new. 
+        In this case: removes two existing groups and assign one new.
         """
         create_group('DevOps')
         payload = {'groups': ['DevOps']}
@@ -125,6 +161,33 @@ class UserGroupsSerializerTestCase(APITestCase):
         instance = serializer.save()
         self.assertTrue(instance.groups.filter(name='DevOps').exists())
         self.assertEqual(instance.groups.all().count(), 1)
+
+    def test_validation_fails_if_admin_attempts_to_remove_last_admin(self):
+        """Test that validation will fail if admin try to remove last member
+        of admin group
+        """
+        payload = {'groups': []}
+        serializer = UserGroupsSerializer(self.admin, data=payload)
+        self.assertFalse(serializer.is_valid())
+
+    def test_validation_not_fails_if_admin_attempts_to_remove_not_last(self):
+        """Test that validation will not fail for admin group when admin
+        try to remove not last memver of admin group
+        """
+        self.admin_group.user_set.add(self.user)
+        self.assertTrue(self.user.groups.count(), 3)
+        payload = {'groups': ['Staff', 'Managers']}
+        serializer = UserGroupsSerializer(self.user, data=payload)
+        self.assertTrue(serializer.is_valid())
+
+    def test_validation_not_fails_for_non_admin_groups(self):
+        """Test that validation will not fail for non admin groups when admin
+        try to remove last member from group
+        """
+        payload = {'groups': []}
+        serializer = UserGroupsSerializer(self.user, data=payload)
+        self.assertTrue(serializer.is_valid())
+
 
 class GroupSerializerTestCase(APITestCase):
     """
@@ -184,6 +247,7 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
         # Macking dummy request
         self.request = APIRequestFactory().get('something')
         self.build_url = self.request.build_absolute_uri
+        self.context = {'request': self.request}
 
     def set_user_to_request(self, user):
         """Utility method to set provided user on dummy WSGIRequest obj"""
@@ -201,7 +265,7 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
         # Generic views will pass context kwarg with request in it
         # to serialzier themselves but here we need to do it by ourselves.
         serializer = UserSerializer(self.admin_user,
-                                    context={'request': self.request})
+                                    context=self.context)
         self.assertCountEqual(serializer.data.keys(), basic_user_fields)
 
     def test_provides_full_set_of_fields_if_user_have_permission(self):
@@ -217,7 +281,7 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
         # Generic views will pass context kwarg with request in it
         # to serialzier themselves but here we need to do it by ourselves.
         serializer = UserSerializer(self.admin_user,
-                                    context={'request': self.request})
+                                    context=self.context)
         self.assertCountEqual(serializer.data.keys(), full_user_fields)
 
     def test_serializer_provides_right_data_representation_for_admins(self):
@@ -244,7 +308,7 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
                 'date_joined': date_joined,
                 'last_update': last_update
                }
-        serializer = UserSerializer(user, context={'request': self.request})
+        serializer = UserSerializer(user, context=self.context)
         self.assertEqual(serializer.data, data)
 
     def test_serializer_provides_right_data_representation_for_not_admin(self):
@@ -266,11 +330,21 @@ class UserSerializerTestCase(CreateUsersMixin, APITestCase):
                     },
                 'groups': [],
                }
-        serializer = UserSerializer(user, context={'request': self.request})
+        serializer = UserSerializer(user, context=self.context)
         self.assertEqual(serializer.data, data)
 
-    def test_create_user(self):
-        self.skipTest(reason="We will test create method in endpoint tests")
+    def test_create_method_creates_user(self):
+        """Small sanity test"""
+        self.request.user = self.regular_user
+        user = UserSerializer(self.admin_user, context=self.context).data
+        user.pop('groups')
+        user.pop('url')
+        user.update({'username': 'some', 'email': 'some@some.com'})
+        UserSerializer().create(user)
+        self.assertTrue(User.objects.filter(username='some').exists())
+
 
     def test_update_user(self):
-        self.skipTest(reason="We will test update method in endpoint tests")
+        """Small sanity test"""
+        UserSerializer().update(self.admin_user, {'username': 'Hello'})
+        self.assertTrue(User.objects.filter(username='Hello').exists())

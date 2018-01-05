@@ -278,6 +278,7 @@ function ChangeGroupUsers(GroupData, row) {
             });
 
             $(main_block).unbind('submit').bind('submit', function(event) {
+                main_block.find('.invalid-feedback').remove();
                 var users = groupUsers.find('select').children();
                 var usersNames = [];
                 $.each(users, function(i, user) {
@@ -297,6 +298,7 @@ function ChangeGroupUsers(GroupData, row) {
                 });
             
                 request.fail( function (data) {
+                    $(main_block).prepend('<div class="invalid-feedback">' + data.responseJSON['users'] + '</div>')
                     console.log(data.responseJSON);
                 });
                 request.done( function (data) {

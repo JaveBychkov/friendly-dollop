@@ -22,7 +22,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     retrieve:
     Return requested user.
-    
+
     list:
     Return a list of all existing users.
 
@@ -35,21 +35,19 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     lookup_field = 'username'
+    # User Deletion through API is not allowed
+    http_method_names = ['get', 'put', 'head', 'options', 'patch', 'post']
     permission_classes = (permissions.IsAuthenticated,
                           permissions.DjangoModelPermissions,
                           ActivateFirstIfInactive,
                           CantEditSuperuserIfNotSuperuser)
-
-    def destroy(self, request, *args, **kwargs):
-        """User deletion is not allowed through API"""
-        return super().http_method_not_allowed(request, *args, **kwargs)
 
 
 class GroupViewSet(viewsets.ModelViewSet):
     """
     retrieve:
     Return requested group.
-    
+
     list:
     Return a list of all existing groups.
 
@@ -85,11 +83,9 @@ class UserGroupsView(generics.RetrieveUpdateAPIView):
     """
     queryset = User.objects.all()
     serializer_class = UserGroupsSerializer
+    http_method_names = ['get', 'put', 'head', 'options']
     lookup_field = 'username'
     lookup_url_kwarg = 'username'
-
-    def partial_update(self, request, *args, **kwargs):
-        return super().http_method_not_allowed(request, *args, **kwargs)
 
 
 class SearchView(generics.ListAPIView):
@@ -114,7 +110,8 @@ class SearchView(generics.ListAPIView):
             if self.request.user.has_perm('profiles.view_full_info'):
                 # We need to convert provided active_filter to boolean,
                 # built-in function from distutils.util is used in convertion.
-                # If active_filter is neither True nor False, nothing will happen.
+                # If active_filter is neither True nor False, nothing will
+                # happen.
                 try:
                     active_filter = bool(strtobool(active_filter))
                     queryset = queryset.filter(is_active=active_filter)

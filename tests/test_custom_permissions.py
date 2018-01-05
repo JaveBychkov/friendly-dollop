@@ -8,17 +8,23 @@ from .utils import (CreateUsersMixin, create_user, create_admin_group,
                     create_group)
 
 
-class TestActivateFirstIfInactivePermission(CreateUsersMixin, APITestCase):
+class RequestsMixin(CreateUsersMixin):
+
+    def setUp(self):
+        super().setUp()
+        self.safe_request = APIRequestFactory().get('/something/')
+        self.request = APIRequestFactory().patch('/something/')
+        self.delete_request = APIRequestFactory().delete('/something/')
+        self.view = 'Dummy'
+
+class TestActivateFirstIfInactivePermission(RequestsMixin, APITestCase):
 
     def setUp(self):
         super().setUp()
         self.permission = ActivateFirstIfInactive()
-        self.safe_request = APIRequestFactory().get('/something/')
-        self.request = APIRequestFactory().patch('/something/')
         self.request.data = {}
         self.inactive_user = create_user('Robert', 'robert@email.com',
                                          is_active=False)
-        self.view = 'Dummy'
 
     def test_return_false_if_user_is_inactive_and_method_is_not_safe(self):
         self.assertFalse(self.permission.has_object_permission(
@@ -41,15 +47,12 @@ class TestActivateFirstIfInactivePermission(CreateUsersMixin, APITestCase):
             self.safe_request, self.view, self.regular_user
         ))
 
-class TestDissallowAdminGroupDeletionPermission(CreateUsersMixin, APITestCase):
+class TestDissallowAdminGroupDeletionPermission(RequestsMixin, APITestCase):
 
     def setUp(self):
         super().setUp()
         self.permission = DissallowAdminGroupDeletion()
-        self.delete_request = APIRequestFactory().delete('/something/')
-        self.safe_request = APIRequestFactory().get('/something/')
         self.group = create_group(name='Managers')
-        self.view = 'Dummy'
 
     def test_return_false_if_group_is_admin_group(self):
         self.delete_request.user = self.admin_user
@@ -80,22 +83,19 @@ class TestDissallowAdminGroupDeletionPermission(CreateUsersMixin, APITestCase):
         ))
 
 
+class TestSuperUserPermission(RequestsMixin, APITestCase):
+    """Test caste for CantEditSuperuserIfNotSuperuser permission"""
 
-class TestCantEditSuperUserIfNotSuperuser(CreateUsersMixin, APITestCase):
-    
     def setUp(self):
         super().setUp()
         self.permission = CantEditSuperuserIfNotSuperuser()
-        self.safe_request = APIRequestFactory().get('/something/')
-        self.request = APIRequestFactory().patch('/something/')
         self.superuser = create_user('Robert', 'robert@email.com',
-                                is_staff=True, is_superuser=True)
+                                     is_staff=True, is_superuser=True)
         self.superuser_2 = create_user('Roberto', 'roberto@email.com',
-                                  is_staff=True, is_superuser=True)
+                                       is_staff=True, is_superuser=True)
         self.editor = create_user('Veronika', 'veronika@email.com',
-                             is_staff=True, is_superuser=False)
+                                  is_staff=True, is_superuser=False)
         self.admin_group.user_set.add(self.superuser, self.editor)
-        self.view = 'Dummy'
 
     def test_return_false_if_not_superuser_editing_superuser(self):
         self.request.user = self.editor

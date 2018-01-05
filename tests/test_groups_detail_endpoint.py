@@ -162,7 +162,7 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
             group.user_set.filter(username=self.regular_user.username).exists()
         )
 
-    def test_server_return_error_if_admin_trying_to_add_non_existing_users(self):
+    def test_return_error_if_admin_trying_to_add_non_existing_users(self):
         """Test that admin can't add nonexisting users to groups"""
         self.client.credentials(
             HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
@@ -239,3 +239,15 @@ class GroupDetailEndpointTestCase(CreateUsersMixin, APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_admins_cant_remove_all_users_from_admin_group(self):
+        self.client.credentials(
+            HTTP_AUTHORIZATION='Token ' + self.admin_user.auth_token.key
+        )
+
+        response = self.client.patch(
+            reverse('api:group-detail', args=[self.admin_group.name]),
+            data={'users': []}, format='json'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
