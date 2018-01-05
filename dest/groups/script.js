@@ -95,7 +95,12 @@ $(document).ready(function() {
                 tr.removeClass('shown');
             }
             else {
-                row.child( [groupInfo(row.data(), row), ChangeGroupUsers(row.data(), row), DeleteGroup(row.data(), row)] ).show();
+                var rowChilds = isAdmin ? 
+                    [groupInfo(row.data(), row), ChangeGroupUsers(row.data(), row), DeleteGroup(row.data(), row)]
+                    : 
+                    [groupInfo(row.data(), row), ChangeGroupUsers(row.data(), row)]
+
+                row.child( rowChilds ).show();
                 tr.addClass('shown');
             }
         });
