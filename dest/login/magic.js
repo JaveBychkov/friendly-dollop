@@ -1,7 +1,7 @@
 $(document).ready(function() {
-    $('.form-login').removeClass('is-invalid');
-    $('.invalid-feedback').text('');
     $('form').submit(function(event) {
+        $('.form-login').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
         var formData = {
             'username' : $('input[name=username]').val(),
             'password': $('input[name=password]').val()
