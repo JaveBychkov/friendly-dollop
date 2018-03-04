@@ -14,7 +14,7 @@ class Address(models.Model):
 
 
 class User(AbstractUser):
-    "Extended User model"""
+    """Extended User model"""
 
     birthday = models.DateField(help_text='User\'s birthday.')
     address = models.ForeignKey(Address, help_text='User\'s address.',

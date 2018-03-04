@@ -31,7 +31,8 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(Address.objects.count(), 1)
 
     def test_on_creating_assign_user_to_existing_address(self):
-        """Test that newly created user will get already existing address if 
+        """
+        Test that newly created user will get already existing address if 
         provided data fully match with one of the adresses in system.
         """
         payload = {'first_name': 'Sarah',
@@ -51,7 +52,8 @@ class TestAddressCreationAndUpdating(APITestCase):
                               [created_obj, self.user])
 
     def test_on_update_assign_user_to_existing_address(self):
-        """Test that user will get already existing address if provided data
+        """
+        Test that user will get already existing address if provided data
         fully match with one of the adresses in system.
         """
         self.data.update({'street': 'High Low'})
@@ -70,7 +72,8 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(Address.objects.count(), 1)
 
     def test_on_update_previous_address_will_not_be_deleted(self):
-        """Test that previous address will not be deleted if it has more than
+        """
+        Test that previous address will not be deleted if it has more than
         one user instead new address will be created.
         """
         self.data.update({'street': 'High Low'})
@@ -97,10 +100,11 @@ class TestAddressCreationAndUpdating(APITestCase):
         self.assertEqual(user2, saved_obj)
         self.assertEqual(user2.address.street, 'Different')
 
-    def test_on_update_change_address_data_if(self):
-        """Test that on update address data will be changed if address
+    def test_change_address_data_if_only_user_and_only_address(self):
+        """
+        Test that on update address data will be changed if address
         with provided data not exists and current address have only one
-        user
+        user.
         """
         payload = {'address': {'city': 'Кстово', 'country': 'Россия'}}
 
